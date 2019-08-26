@@ -135,6 +135,7 @@ var options2 = {
 
 var data = [];
 var data2 = [];
+var spectrums = [];
 var plot1 = $.plot(placeholder1, [data], options1);
 var plot2 = $.plot(placeholder2, [data2], options2);
 
@@ -168,6 +169,7 @@ ws2.onmessage = function (event) {
     plot2.setupGrid();
     plot2.draw();
     zoomSelect(placeholder2,plot2,'x',data2);
+    spectrums.push(data2);
   }
 }
 

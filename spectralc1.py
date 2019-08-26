@@ -71,7 +71,7 @@ class spectral:
         self.fftbuffer.add(np.array([np.abs(fft(y*self.w/np.sum(self.w)))])*2)
         if self.m < self.navg:
             self.m += 1
-        print(self.m)
+#        print(self.m)
         Y = np.sum(self.fftbuffer.get(), 0)
         self.averaged = Y/self.m
     

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # get binary data from Arduino, transfer binary data to browser
-#
+#almost ok. FFT amplitude error
 
 import threading
 import serial
@@ -138,6 +138,7 @@ async def useBfft(websocket, path, spec):
                 if spectrumReady:
                     spectrumReady = False
                     Y, f = spec.get()
+                    print(np.max(Y[10:]))
                     await websocket.send(packB([Y])) #return data: spectrum start frame, end frame, spectrum start time, end time,Y
                     
 #                    print(max(Y))
