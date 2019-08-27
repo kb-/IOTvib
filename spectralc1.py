@@ -7,6 +7,7 @@ Created on Fri Aug 16 21:43:24 2019
 import numpy as np
 from scipy import signal as sig
 from scipy.fftpack import fft
+import pandas as pd
 
 #TO DO: handle multiple tracks
 
@@ -35,6 +36,7 @@ class spectral:
         self.m = 0
         self.i = 0
         self.oidx = 0
+#        self.df = pd.DataFrame(columns = np.arange(1,nlines+1))
 
     #return real side of spectrum and frequencies
     def get(self):
@@ -68,6 +70,8 @@ class spectral:
         self.averaged = 1/self.navg*self.averaged + (1-1/self.navg)*np.abs(fft(y*self.w/np.sum(self.w)))*2
         
     def fft_spectrum_linAvg(self, y):
+#        df = self.df.append([y])
+#        df.to_hdf('fft_input.h5', 'table', append=True)
         self.fftbuffer.add(np.array([np.abs(fft(y*self.w/np.sum(self.w)))])*2)
         if self.m < self.navg:
             self.m += 1
@@ -103,6 +107,9 @@ class RingBuffer():
         "Returns the first-in-first-out data in the ring buffer"
         idx = (self.index + np.arange(self.data.shape[0])) %self.data.shape[0]
         return self.data[idx]
+    
+#    def toFIle(self):
+#        self.df.to_hdf('fft_input.h5', 'table', append=True)
 
 if __name__ == '__main__':
     import argparse
