@@ -1,0 +1,379 @@
+<!-- get binary data from Python - Flot - DequeSerial8.py - -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Flot</title>
+    <script src="../flot/jquery-2.2.4.min.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.event.drag.js"></script> 
+    <script language="javascript" type="text/javascript" src="../flot/jquery.mousewheel.js"></script>
+    <script src="../flot/jquery.canvaswrapper.js"></script>
+    <script src="../flot/jquery.colorhelpers.js"></script>
+    <script src="../flot/jquery.flot.js"></script>
+    <script src="../flot/jquery.flot.saturated.js"></script>
+    <script src="../flot/jquery.flot.browser.js"></script>
+    <script src="../flot/jquery.flot.drawSeries.js"></script>
+    <script src="../flot/jquery.flot.uiConstants.js"></script>
+    <script src="../flot/jquery.flot.downsample.js"></script>
+    <script src="../flot/jquery.flot.navigate.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.flot.logaxis.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.flot.touchNavigate.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.flot.hover.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.flot.touch.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.flot.selection.js"></script>
+    <script src="../flot/datastream.js"></script>
+	<style type="text/css">
+
+	#placeholder1 .button {
+		position: absolute;
+		cursor: pointer;
+	}
+
+	#placeholder1 div.button {
+		font-size: smaller;
+		color: #999;
+		background-color: #eee;
+		padding: 2px;
+    margin: 0;
+    vertical-align: top;
+	}
+	.message {
+		padding-left: 50px;
+		font-size: smaller;
+	}
+
+    </style>
+</head>
+<body>
+    <!-- prepare a DOM container with width and height -->
+    <div id="placeholder1" style="width: auto;height:400px;">
+    </div>
+    <div id="placeholder2" style="width: auto;height:400px;">
+    </div>
+    <script type="text/javascript">
+
+var XGAIN = 0.00376390;
+var YGAIN = 0.00376009;
+var ZGAIN = 0.00349265;
+var df = 1;
+
+placeholder1 = $("#placeholder1");
+placeholder2 = $("#placeholder2");
+
+//https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+var def1 = [
+  'len','uint8',
+  't', 'uint32le',
+  'cnt', 'uint32le',
+  'x', 'int16le',
+  'y', 'int16le',
+  'z', 'int16le',
+  'info', 'uint16le',
+  'sync','uint8'
+];
+
+var def2 = [
+  'X','float32'
+];
+
+var options1 = {
+  series: {
+    shadowSize: 0,	// Drawing is faster without shadows
+    //downsample: { threshold: 2000 }//using Largest-Triangle-Three-Buckets downsampling plugin (best compromize between keeping visual features and performance) https://skemman.is/handle/1946/15343
+  },
+  yaxis: {
+    min: -16,
+    max: 16
+  },
+  xaxis: {
+    //show: false
+  },
+  zoom: {
+    interactive: false
+  },
+  grid: {
+    hoverable: true,
+    clickable: true
+  },
+  // pan: {
+    // interactive: true
+  // }
+  selection: {
+    mode: "xy"
+  }
+};
+
+var options2 = {
+  series: {
+    shadowSize: 0,	// Drawing is faster without shadows
+    //downsample: { threshold: 2000 }//using Largest-Triangle-Three-Buckets downsampling plugin (best compromize between keeping visual features and performance) https://skemman.is/handle/1946/15343
+  },
+  yaxis: {
+    mode: "log",
+    showTickLabels: "all",
+    max: 10,
+    min: 0.00001
+  },
+  xaxis: {
+    //show: false
+    max: 1600
+  },
+  zoom: {
+    interactive: false
+  },
+  grid: {
+    hoverable: true,
+    clickable: true
+  },
+  // pan: {
+    // interactive: true
+  // }
+  selection: {
+    mode: "xy"
+  }
+};
+
+
+
+var data = [[],[],[]
+    // { data: [], label: "X" },
+    // { data: [], label: "Y"},
+    // { data: [], label: "Z"}
+  ];
+var data2 = [];
+var spectrums = [];
+var plot1 = $.plot(placeholder1, [data], options1);
+var plot2 = $.plot(placeholder2, [data2], options2);
+
+var ws1 = new WebSocket("ws://127.0.0.1:5678/");
+var ws2 = new WebSocket("ws://127.0.0.1:5677/");
+
+$(function(){
+  setToolTip(2);
+  // setZoomButton(placeholder2,plot2);
+});
+
+console.time("onmessage ws2");
+ws2.onmessage = function (event) {
+  decode(event.data, def2, updateOption);
+  // console.timeLog("onmessage ws2");
+  
+  function updateOption(ds){
+    data2 = [];
+    var j=0;
+    var tmpdata = [];
+    // var x=[], y=[];
+    while (!ds.isEof()) {
+      var obj = ds.readStruct(def2);
+      tmpdata.push([j*df,obj["X"]*XGAIN]);//for some reason obj.x didn't work here...
+      // y.push(obj.x*XGAIN);
+      // x.push(j*df);
+      j++;
+    }
+    data2 = data2.concat(tmpdata);
+    plot2.setData([data2])
+    plot2.setupGrid();
+    plot2.draw();
+    zoomSelect(placeholder2,plot2,'x',data2);
+    spectrums.push(data2);
+  }
+}
+
+ws1.i=0;
+
+performance.mark("a");
+// console.time("onmessage start");
+// console.time("onmessage end");
+
+ws1.data_ = [];
+ws1.onmessage = function (event) {
+  // console.timeLog("onmessage start");
+  decode(event.data, def1, updateOption);
+  
+  function updateOption(ds){
+    performance.mark("b");
+    performance.measure("measure a to b","a", "b")
+    
+    var j=0;
+    var tmpdata = [];
+    var t=[], X=[],Y=[],Z=[];
+    while (!ds.isEof()) {
+      var obj = ds.readStruct(def1);
+      
+      X.push(obj.x*XGAIN);
+      Y.push(obj.y*YGAIN);
+      Z.push(obj.z*ZGAIN);
+      t.push(j+ws1.i);
+      j++;
+    }
+    // console.log("range X", t[0], t[t.length-1]);
+    // console.log("range Y", X[0], X[X.length-1]);
+    tmpdata = [[t,X],[t,Y],[t,Z]].map(transpose);
+    // tmpdata = transpose([[t,X],[t,Y],[t,Z]]);
+    for (i = 0; i < tmpdata.length; i++){
+      Array.prototype.push.apply(data[i], tmpdata[i])
+    }
+    // data = data.concat(tmpdata);
+    // data = data.concat(tmpdata);
+    
+    if (data[0].length > 32000){
+        this.data_ = getData.get(data[0].length-32000, data[0].length-1);
+        plot1.setData(this.data_)
+        plot1.getOptions().xaxes[0].min = this.data_[0][0][0];//[1st track][1st point][t]
+        plot1.getOptions().series.downsample.threshold = 2500;//downsample
+    }else{
+        plot1.setData(data);
+    }
+    plot1.getOptions().xaxes[0].max = data[0][data[0].length-1][0];//[1st track][last point][t]
+    plot1.setupGrid();
+    plot1.draw();
+    
+    ws1.i=ws1.i+j;
+    // console.timeLog("onmessage end");
+  }
+};
+
+ws1.onclose = function(event){
+        //add some interactivity
+      zoomSelect(placeholder1,plot1,"xy",data);
+      // setZoomButton(placeholder1,plot1);
+      setToolTip(1);
+}
+
+function zoomSelect(placeholder,plot,axis,data_){
+      placeholder.off("plotselected").bind("plotselected", function (event, ranges) {
+          if(axis.indexOf("x") > -1){
+            $.each(plot.getXAxes(), function(_, axis) {
+              var opts = axis.options;
+              opts.min = ranges.xaxis.from;
+              opts.max = ranges.xaxis.to;
+            });
+          }
+          
+          if(axis.indexOf("y") > -1){
+            $.each(plot.getYAxes(), function(_, axis) {
+              var opts = axis.options;
+              opts.min = ranges.yaxis.from;
+              opts.max = ranges.yaxis.to;
+            });
+          }
+          
+          // plot.getData()[0].points.show = true;//TODO: only show at strong zoom; adjust downsample threshold with zoom
+          plot.getOptions().series.downsample.threshold = 10000000;
+          plot.setData(data_);
+          
+          plot.setupGrid();
+          plot.draw();
+          plot.clearSelection();
+      });
+}
+
+function setZoomButton(placeholder,plot){
+      $("<div class='button' style='right:20px;top:20px'>zoom out</div>")
+    .appendTo(placeholder)
+    .click(function (event) {
+      event.preventDefault();
+      plot.zoomOut();
+    });
+}
+
+function setToolTip(i){
+  	$("<div id='tooltip"+i+"'></div>").css({
+			position: "absolute",
+			display: "none",
+			border: "1px solid #fdd",
+			padding: "2px",
+			"background-color": "#fee",
+			opacity: 0.80
+		}).appendTo("body");
+
+		$("#placeholder"+i).bind("plothover", function (event, pos, item) {
+
+			if ($("#enablePosition:checked").length > 0) {
+				var str = "(" + pos.x.toFixed(2) + ", " + pos.y.toFixed(2) + ")";
+				$("#hoverdata"+i).text(str);
+			}
+
+			if (1) {
+				if (item) {
+					var x = item.datapoint[0].toFixed(2),
+						y = item.datapoint[1].toFixed(2);
+
+					$("#tooltip"+i).html("x: " + x + " y: " + y)
+						.css({top: item.pageY+5, left: item.pageX+5})
+						.fadeIn(200);
+				} else {
+					$("#tooltip"+i).hide();
+				}
+			}
+		});
+
+		$("#placeholder"+i).bind("plothovercleanup", function (event, pos, item) {
+				$("#tooltip"+i).hide();
+		});
+}
+
+//convert binary data to datastream
+function decode(dataB, def, cb){
+  new Response(dataB).arrayBuffer().then(runOnDs);//event.data is blob
+    function runOnDs(a){
+      f = new Uint8Array(a);  
+      cb(new DataStream(f.buffer));
+    }
+}
+
+/*convert Int16Array to Float32Array*/
+/* var Int16toFloat32 = function(raw) {
+    var data   = new Int16Array(raw);
+    var output = new Float32Array(data.length);
+    for (var i = 0; i < data.length; i++) {
+        var int   = data[i];
+        var float = (int >= 0x8000) ? -(0x10000 - int) / 0x8000 : int / 0x7FFF;
+        output[i] = float;
+    }
+    return output;
+}; */
+
+getData = {
+  get:function(a , b){
+     //console.count("getData");
+    for (i = 0; i < data.length; i++){
+      this.d[i] = data[i].filter(e=>{return (e[0]>=a&e[0]<=b)});
+    }
+    return this.d;
+  },
+  d:[]
+}
+
+function makeArray(w, h, val) {
+  var arr = [];
+  for(let i = 0; i < h; i++) {
+    arr[i] = [];
+    for(let j = 0; j < w; j++) {
+      arr[i][j] = val;
+    }
+  }
+  return arr;
+}
+
+//Extract "len" long data from array every "nth" element, starting at index "startIdx"
+//const periodicExtract = (arr, nth, len, startIdx) => arr.slice(startIdx,arr.length).filter((e,i) => ((i) % nth < len));
+function periodicExtract(arr, nth, len, startIdx){
+  return arr.slice(startIdx,arr.length).filter((e,i) => ((i) % nth < len));
+}
+
+Math.diff = function(a){
+  r= [...a];//copy without reference
+  let i = 0;
+  while(i<a.length){
+    r[i] = a[i+1]-a[i];
+    i++;
+  }
+  r.pop();
+  return r;
+}
+
+function transpose(array){return array[0].map((col, i) => array.map(row => row[i]));}
+    </script>
+</body>
+</html>
