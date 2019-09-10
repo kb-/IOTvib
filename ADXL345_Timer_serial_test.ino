@@ -197,7 +197,7 @@ void TC5_Handler(){
       data.cnt = i;   
       readRegister(DATAX0, 6, values);  
 //      data.cnt = SysTick->VAL+7500;//accuracy testing (unit=clock cycle, contant = perfect accuracy)
-      //The ADXL345 gives 10-bit acceleration values, but they are stored as bytes (8-bits). To get the full value, two bytes must be combined for each axis.
+      //The ADXL345 gives 13-bit acceleration values, but they are stored as bytes (8-bits). To get the full value, two bytes must be combined for each axis.
       data.x = ((int)values[1]<<8)|(int)values[0];//The X value is stored in values[0] and values[1].
       data.y = ((int)values[3]<<8)|(int)values[2];//The Y value is stored in values[2] and values[3].
       data.z = ((int)values[5]<<8)|(int)values[4];//The Z value is stored in values[4] and values[5].

@@ -1,0 +1,412 @@
+<!-- get binary data from Python - Flot - DequeSerial8.py - -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Flot</title>
+    <script src="../flot/jquery-2.2.4.min.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.event.drag.js"></script> 
+    <script language="javascript" type="text/javascript" src="../flot/jquery.mousewheel.js"></script>
+    <script src="../flot/jquery.canvaswrapper.js"></script>
+    <script src="../flot/jquery.colorhelpers.js"></script>
+    <script src="../flot/jquery.flot.js"></script>
+    <script src="../flot/jquery.flot.saturated.js"></script>
+    <script src="../flot/jquery.flot.browser.js"></script>
+    <script src="../flot/jquery.flot.drawSeries.js"></script>
+    <script src="../flot/jquery.flot.uiConstants.js"></script>
+    <script src="../flot/jquery.flot.downsample.js"></script>
+    <script src="../flot/jquery.flot.navigate.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.flot.logaxis.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.flot.touchNavigate.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.flot.hover.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.flot.touch.js"></script>
+    <script language="javascript" type="text/javascript" src="../flot/jquery.flot.selection.js"></script>
+    <script src="../flot/datastream.js"></script>
+	<style type="text/css">
+
+	#placeholder1 .button {
+		position: absolute;
+		cursor: pointer;
+	}
+
+	#placeholder1 div.button {
+		font-size: smaller;
+		color: #999;
+		background-color: #eee;
+		padding: 2px;
+    margin: 0;
+    vertical-align: top;
+	}
+	.message {
+		padding-left: 50px;
+		font-size: smaller;
+	}
+
+    </style>
+</head>
+<body>
+    <button type="button" onclick="settings_tog()">
+        <svg xmlns="http://www.w3.org/2000/svg"  style="width: 16px;" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="m60.953 39.151l-4.061-2.582c.271-1.482.42-3.008.42-4.568 0-1.56-.148-3.084-.419-4.566l4.06-2.582c.912-.581 1.305-1.915.868-2.964l-1.583-3.821c-.435-1.051-1.656-1.718-2.711-1.483l-4.695 1.044c-1.744-2.523-3.936-4.714-6.459-6.459l1.045-4.696c.234-1.055-.432-2.276-1.482-2.71l-3.822-1.584c-1.051-.438-2.386-.046-2.966.868l-2.582 4.06c-1.482-.271-3.005-.42-4.566-.42-1.561 0-3.086.149-4.567.419l-2.582-4.06c-.581-.914-1.914-1.306-2.965-.87l-3.82 1.584c-1.051.434-1.719 1.656-1.483 2.712l1.044 4.695c-2.524 1.745-4.714 3.935-6.458 6.458l-4.696-1.044c-1.055-.236-2.276.432-2.711 1.481l-1.583 3.821c-.436 1.051-.044 2.386.868 2.966l4.061 2.582c-.27 1.482-.419 3.007-.419 4.567 0 1.561.149 3.085.419 4.566l-4.061 2.582c-.913.581-1.304 1.915-.868 2.967l1.583 3.821c.436 1.049 1.656 1.718 2.711 1.481l4.696-1.045c1.745 2.523 3.935 4.714 6.458 6.459l-1.045 4.696c-.236 1.055.433 2.276 1.482 2.71l3.821 1.584c1.052.434 2.385.044 2.966-.869l2.582-4.06c1.482.271 3.007.419 4.567.419 1.56 0 3.083-.148 4.566-.419l2.582 4.06c.58.913 1.915 1.303 2.965.869l3.82-1.582c1.053-.436 1.719-1.657 1.483-2.712l-1.044-4.696c2.523-1.744 4.715-3.936 6.459-6.459l4.695 1.045c1.055.236 2.276-.433 2.711-1.481l1.583-3.821c.438-1.05.045-2.384-.867-2.963m-35.41 11.432l-2.066-.855c-4.019-1.938-7.271-5.19-9.205-9.209l-.852-2.056c-.705-2.027-1.107-4.195-1.107-6.462 0-2.273.405-4.446 1.113-6.478l.842-2.033c1.935-4.022 5.188-7.277 9.208-9.215l2.068-.857c2.025-.704 4.19-1.105 6.455-1.105 2.26 0 4.423.4 6.445 1.102l2.088.865c4.008 1.934 7.252 5.177 9.187 9.184l.869 2.1c.7 2.02 1.099 4.179 1.099 6.437s-.398 4.418-1.099 6.438l-.869 2.1c-1.935 4.008-5.179 7.25-9.187 9.184l-2.088.865c-2.022.701-4.186 1.102-6.445 1.102-2.264-.002-4.43-.404-6.456-1.107"/><path d="m47 32.001c0-8.284-6.715-15-15-15-8.283 0-15 6.716-15 15 0 8.284 6.717 15 15 15 8.285 0 15-6.716 15-15m-22.5 0c0-4.142 3.358-7.5 7.5-7.5 4.141 0 7.5 3.358 7.5 7.5 0 4.142-3.358 7.5-7.5 7.5-4.141 0-7.5-3.358-7.5-7.5"/></svg>
+    </button>
+    <button type="button" onclick="stop()">Stop</button>
+    <div id="placeholder1" style="width: auto;height:400px;">
+    </div>
+    <div id="placeholder2" style="width: auto;height:400px;">
+    </div>
+    <script type="text/javascript">
+
+var XGAIN = 0.00376390;
+var YGAIN = 0.00376009;
+var ZGAIN = 0.00349265;
+var df = 1;
+
+placeholder1 = $("#placeholder1");
+placeholder2 = $("#placeholder2");
+
+//https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+var def1 = [
+  'len','uint8',
+  't', 'uint32le',
+  'cnt', 'uint32le',
+  'x', 'int16le',
+  'y', 'int16le',
+  'z', 'int16le',
+  'info', 'uint16le',
+  'sync','uint8'
+];
+
+var def2 = [
+  'X','float32',
+  'Y','float32',
+  'Z','float32'
+];
+
+var options1 = {
+  series: {
+    shadowSize: 0,	// Drawing is faster without shadows
+    //downsample: { threshold: 2000 }//using Largest-Triangle-Three-Buckets downsampling plugin (best compromize between keeping visual features and performance) https://skemman.is/handle/1946/15343
+  },
+  yaxis: {
+    min: -16,
+    max: 16
+  },
+  xaxis: {
+    //show: false
+  },
+  zoom: {
+    interactive: false
+  },
+  grid: {
+    hoverable: true,
+    clickable: true
+  },
+  // pan: {
+    // interactive: true
+  // }
+  selection: {
+    mode: "xy"
+  }
+};
+
+var options2 = {
+  series: {
+    shadowSize: 0,	// Drawing is faster without shadows
+    //downsample: { threshold: 2000 }//using Largest-Triangle-Three-Buckets downsampling plugin (best compromize between keeping visual features and performance) https://skemman.is/handle/1946/15343
+  },
+  yaxis: {
+    mode: "log",
+    showTickLabels: "all",
+    max: 10,
+    min: 0.00001
+  },
+  xaxis: {
+    //show: false
+    max: 400
+  },
+  zoom: {
+    interactive: false
+  },
+  grid: {
+    hoverable: true,
+    clickable: true
+  },
+  // pan: {
+    // interactive: true
+  // }
+  selection: {
+    mode: "xy"
+  }
+};
+
+
+
+var data = [[],[],[]
+    // { data: [], label: "X" },
+    // { data: [], label: "Y"},
+    // { data: [], label: "Z"}
+  ];
+var data2 = [[],[],[]];
+var spectrums = [];
+var plot1 = $.plot(placeholder1, [data], options1);
+var plot2 = $.plot(placeholder2, [data2], options2);
+
+var ws1 = new WebSocket("ws://127.0.0.1:5678/");
+var ws2 = new WebSocket("ws://127.0.0.1:5677/");
+var ws3 = new WebSocket("ws://127.0.0.1:5676/");
+
+$(function(){
+  setToolTip(2);
+                                              
+  // setZoomButton(placeholder2,plot2);
+});
+
+// console.time("onmessage ws2");
+ws2.onmessage = function (event) {
+  performance.mark("ws2 a");
+  decode(event.data, def2, updateOption);
+  // console.timeLog("onmessage ws2");
+  
+  function updateOption(ds){
+    var j=0;
+    data2 = [[],[],[]];
+    // var x=[], y=[];
+    var f=[], X=[],Y=[],Z=[];
+    while (!ds.isEof()) {
+      var obj = ds.readStruct(def2);
+      X.push(obj.X*XGAIN);
+      Y.push(obj.Y*YGAIN);
+      Z.push(obj.Z*ZGAIN);
+      f.push(j*df);
+      // data2.push([[j*df,obj["X"]*XGAIN],[j*df,obj["Y"]*YGAIN],[j*df,obj["Z"]*ZGAIN]]);
+      // y.push(obj.x*XGAIN);
+      // x.push(j*df);
+      j++;
+    }
+    tmpdata = [[f,X],[f,Y],[f,Z]].map(transpose);
+    // tmpdata = transpose([[t,X],[t,Y],[t,Z]]);
+    for (i = 0; i < tmpdata.length; i++){
+      Array.prototype.push.apply(data2[i], tmpdata[i])
+    }
+    // data2 = data2.concat(data2);
+    // for (i = 0; i < data2.length; i++){
+      // Array.prototype.push.apply(data2[i], data2[i])
+    // }
+    plot2.setData(data2);
+    // plot2.setData(data2);
+    // plot2.setupGrid();
+    plot2.draw();
+    // zoomSelect(placeholder2,plot2,'x',data2);
+    // spectrums.push(data2);
+    performance.mark("ws2 b");
+    performance.measure("measure ws2","ws2 a", "ws2 b")
+  }
+}
+
+ws1.i=0;
+
+performance.mark("a");
+// console.time("onmessage start");
+// console.time("onmessage end");
+
+ws1.data_ = [];
+ws1.onmessage = function (event) {
+  // console.timeLog("onmessage start");
+  decode(event.data, def1, updateOption);
+  
+  function updateOption(ds){
+    // performance.mark("b");
+    // performance.measure("measure a to b","a", "b")
+    
+    var j=0;
+    var tmpdata = [];
+    var t=[], X=[],Y=[],Z=[];
+    while (!ds.isEof()) {
+      var obj = ds.readStruct(def1);
+      
+      X.push(obj.x*XGAIN);
+      Y.push(obj.y*YGAIN);
+      Z.push(obj.z*ZGAIN);
+      t.push(j+ws1.i);
+      j++;
+    }
+    // console.log("range X", t[0], t[t.length-1]);
+    // console.log("range Y", X[0], X[X.length-1]);
+    tmpdata = [[t,X],[t,Y],[t,Z]].map(transpose);
+    // tmpdata = transpose([[t,X],[t,Y],[t,Z]]);
+    for (i = 0; i < tmpdata.length; i++){
+      Array.prototype.push.apply(data[i], tmpdata[i])
+    }
+    // data = data.concat(tmpdata);
+    // data = data.concat(tmpdata);
+    
+    if (data[0].length > 32000){
+        this.data_ = getData.get(data[0].length-32000, data[0].length-1);
+        plot1.setData(this.data_)
+        plot1.getOptions().xaxes[0].min = this.data_[0][0][0];//[1st track][1st point][t]
+        plot1.getOptions().series.downsample.threshold = 2500;//downsample
+    }else{
+        plot1.setData(data);
+    }
+    plot1.getOptions().xaxes[0].max = data[0][data[0].length-1][0];//[1st track][last point][t]
+    plot1.setupGrid();
+    plot1.draw();
+    
+    ws1.i=ws1.i+j;
+    // console.timeLog("onmessage end");
+  }
+};
+
+ws2.onclose = function(event){
+      zoomSelect(placeholder2,plot2,'x',data2);
+}
+
+ws1.onclose = function(event){
+        //add some interactivity
+      zoomSelect(placeholder1,plot1,"xy",data);
+      // setZoomButton(placeholder1,plot1);
+      setToolTip(1);
+}
+
+function zoomSelect(placeholder,plot,axis,data_){
+      placeholder.off("plotselected").bind("plotselected", function (event, ranges) {
+          if(axis.indexOf("x") > -1){
+            $.each(plot.getXAxes(), function(_, axis) {
+              var opts = axis.options;
+              opts.min = ranges.xaxis.from;
+              opts.max = ranges.xaxis.to;
+            });
+          }
+          
+          if(axis.indexOf("y") > -1){
+            $.each(plot.getYAxes(), function(_, axis) {
+              var opts = axis.options;
+              opts.min = ranges.yaxis.from;
+              opts.max = ranges.yaxis.to;
+            });
+          }
+          
+          // plot.getData()[0].points.show = true;//TODO: only show at strong zoom; adjust downsample threshold with zoom
+          plot.getOptions().series.downsample.threshold = 10000000;
+          plot.setData(data_);
+          
+          plot.setupGrid();
+          plot.draw();
+          plot.clearSelection();
+      });
+}
+
+function setZoomButton(placeholder,plot){
+      $("<div class='button' style='right:20px;top:20px'>zoom out</div>")
+    .appendTo(placeholder)
+    .click(function (event) {
+      event.preventDefault();
+      plot.zoomOut();
+    });
+}
+
+function setToolTip(i){
+  	$("<div id='tooltip"+i+"'></div>").css({
+			position: "absolute",
+			display: "none",
+			border: "1px solid #fdd",
+			padding: "2px",
+			"background-color": "#fee",
+			opacity: 0.80
+		}).appendTo("body");
+
+		$("#placeholder"+i).bind("plothover", function (event, pos, item) {
+
+			if ($("#enablePosition:checked").length > 0) {
+				var str = "(" + pos.x.toFixed(2) + ", " + pos.y.toFixed(2) + ")";
+				$("#hoverdata"+i).text(str);
+			}
+
+			if (1) {
+				if (item) {
+					var x = item.datapoint[0].toFixed(2),
+						y = item.datapoint[1].toFixed(2);
+
+					$("#tooltip"+i).html("x: " + x + " y: " + y)
+						.css({top: item.pageY+5, left: item.pageX+5})
+						.fadeIn(200);
+				} else {
+					$("#tooltip"+i).hide();
+				}
+			}
+		});
+
+		$("#placeholder"+i).bind("plothovercleanup", function (event, pos, item) {
+				$("#tooltip"+i).hide();
+		});
+}
+
+//actions
+//stop data flow
+function stop(){
+  ws3.send(JSON.stringify({action: 'stop'}));
+}
+
+//convert binary data to datastream
+function decode(dataB, def, cb){
+  new Response(dataB).arrayBuffer().then(runOnDs);//event.data is blob
+    function runOnDs(a){
+      f = new Uint8Array(a);  
+      cb(new DataStream(f.buffer));
+    }
+}
+
+/*convert Int16Array to Float32Array*/
+/* var Int16toFloat32 = function(raw) {
+    var data   = new Int16Array(raw);
+    var output = new Float32Array(data.length);
+    for (var i = 0; i < data.length; i++) {
+        var int   = data[i];
+        var float = (int >= 0x8000) ? -(0x10000 - int) / 0x8000 : int / 0x7FFF;
+        output[i] = float;
+    }
+    return output;
+}; */
+
+getData = {
+  get:function(a , b){
+     //console.count("getData");
+    for (i = 0; i < data.length; i++){
+      this.d[i] = data[i].filter(e=>{return (e[0]>=a&e[0]<=b)});
+    }
+    return this.d;
+  },
+  d:[]
+}
+
+function makeArray(w, h, val) {
+  var arr = [];
+  for(let i = 0; i < h; i++) {
+    arr[i] = [];
+    for(let j = 0; j < w; j++) {
+      arr[i][j] = val;
+    }
+  }
+  return arr;
+}
+
+//Extract "len" long data from array every "nth" element, starting at index "startIdx"
+//const periodicExtract = (arr, nth, len, startIdx) => arr.slice(startIdx,arr.length).filter((e,i) => ((i) % nth < len));
+function periodicExtract(arr, nth, len, startIdx){
+  return arr.slice(startIdx,arr.length).filter((e,i) => ((i) % nth < len));
+}
+
+Math.diff = function(a){
+  r= [...a];//copy without reference
+  let i = 0;
+  while(i<a.length){
+    r[i] = a[i+1]-a[i];
+    i++;
+  }
+  r.pop();
+  return r;
+}
+
+function transpose(array){return array[0].map((col, i) => array.map(row => row[i]));}
+    </script>
+</body>
+</html>
