@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # get binary data from Arduino, transfer binary data to browser + 3 fft tracks, save data, control 2 way socket
-#
+#no error but bad socket use (should always be open)
 
 import threading
 import serial
@@ -45,6 +45,7 @@ l_fmt = struct.calcsize(fmt)
 
 l_fmt2 = struct.calcsize(fmt2)
 
+onStart = True
 stopped = False
 cnt = 0
 buffer = collections.deque()            #read/outgoing data buffer
@@ -69,7 +70,7 @@ dsts_cnt = 0
 
 def read_from_port(s, appendData, appendData2):
     syncB(s, s.read(l_fmt*2))           #sync data with 2 samples
-    while True:
+    while not stopped:
         if s.inWaiting() > l_fmt*l_packet:
             read_byte = s.read(l_fmt*l_packet)    #read 0.1 s of data
             if read_byte is not None:
@@ -158,34 +159,54 @@ async def useBfft(websocket, path, spec):
 
 #websocket3
 async def cmd(websocket, path):
-    global stopped
-    print('waiting cmd')
-    async for message in websocket:
-        data = json.loads(message)
-        print(data["action"])
-        
-        if data["action"] == "stop":
-            stopped = True
-            ser.close()
+    global onStart
+    global loop
+    global thread
+    if onStart:
+        global stopped
+        print('waiting cmd')
+        async for message in websocket:
+            data = json.loads(message)
+            print(data["action"])
             
-#        if data["action"] == "start":
-#            stopped = False
+            if data["action"] == "stop":
+                stopped = True
+                ser.close()
+#                loop.stop()
+                
+            if data["action"] == "start":
+                onStart = False
+                stopped = False
+                await start()
         
    
 async def serve(port,fn):
     return await websockets.serve(fn, "127.0.0.1", port)   
 
-async def runTogether():
-    bound_useBfft = functools.partial(useBfft, spec = spectrum)#pack arguments for useBff because websockets.serve doen't take extra arguments
-    await asyncio.gather(serve(5678, useB), serve(5677, bound_useBfft), serve(5676, cmd))
-
-try:
+async def start():
+    global ser
+    global loop
+    global thread
+    
+    asyncio.ensure_future(run(), loop=loop)
     thread = threading.Thread(target=read_from_port, args=(ser,buffer.append,buffer2.append))
     thread.start()
+    
+async def run():
+    global gat23
+    bound_useBfft = functools.partial(useBfft, spec = spectrum)#pack arguments for useBff because websockets.serve doen't take extra arguments
+    gat23 =  await asyncio.gather(serve(5678, useB), serve(5677, bound_useBfft))
 
+
+
+gat1 = asyncio.gather(serve(5676, cmd))
+            
+try:    
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(runTogether())
-    loop.run_forever()
+
+    if not loop.is_running():
+        loop.run_until_complete(gat1)
+        loop.run_forever()
         
 except KeyboardInterrupt:
     ser.close()

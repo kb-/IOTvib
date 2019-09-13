@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# get binary data from Arduino, transfer binary data to browser + 3 fft tracks, save data, control 2 way socket
-#
+# get binary data from Arduino, transfer binary data to browser + 3 fft tracks, save data, control 2 way socket, start/pause, record data on/off
+#ok :)
 
 import threading
 import serial
@@ -26,10 +26,10 @@ import h5py
 #read Arduino param
 port = 'COM9'
 baud = 500000     #read fast! don't lose too much CPU cycles reading
-l_packet = 320    #0.1 s of data at 3200 Hz
 
 #sensor data
 fs = 800
+l_packet = int(fs/10)    #0.1 s of data at 3200 Hz
 xGain = 0.00376390                      #gain from ADXL345 X axis
 fmt = "<bIIhhhHb" #incoming data format: sync byte, size byte, time uint32, count uint 32, xyz int16, spare uint16
 
@@ -45,7 +45,12 @@ l_fmt = struct.calcsize(fmt)
 
 l_fmt2 = struct.calcsize(fmt2)
 
-stopped = False
+paused = True
+settings = {
+    "record_data":True,
+    "record_fft":False
+}
+
 cnt = 0
 buffer = collections.deque()            #read/outgoing data buffer
 buffer2 = collections.deque()           #spectrum outgoing data buffer
@@ -73,8 +78,9 @@ def read_from_port(s, appendData, appendData2):
         if s.inWaiting() > l_fmt*l_packet:
             read_byte = s.read(l_fmt*l_packet)    #read 0.1 s of data
             if read_byte is not None:
-                appendData(read_byte)   #append element to right of buffer
-                appendData2(read_byte)
+                if not paused:
+                    appendData(read_byte)   #append element to right of buffer
+                    appendData2(read_byte)
                 
         time.sleep(0.09)                #reduce CPU load
         
@@ -87,17 +93,22 @@ def syncB(s, d):
     s.read(i)                           #discard out of sync data
 
 #websocket
+start_time = time.time()
+#cnt_data_sent = 0;
 async def useB(websocket, path):
-    # start_time = time.time()
-    while not stopped:
+#    global cnt_data_sent
+    while True:
         try:
-            data = buffer.popleft()     #pop element from left of buffer (oldest read_byte block)
-            await websocket.send(data)
-            await asyncio.sleep(0.09)
+            if not paused:
+                data = buffer.popleft()     #pop element from left of buffer (oldest read_byte block)
+                await websocket.send(data)
+#                cnt_data_sent +=1
+#                print("--- %s seconds ---" % ((time.time() - start_time)/cnt_data_sent))
         except IndexError:              #don't stop if first reads are empty
             continue
+        finally:
+            await asyncio.sleep(0.09)
 
-    # print("--- %s seconds ---" % (time.time() - start_time))
 x = np.zeros(l_packet)
 y = np.zeros(l_packet)
 z = np.zeros(l_packet)
@@ -132,25 +143,27 @@ async def useBfft(websocket, path, spec):
     global spectrumReady
     # start_time = time.time()
     
-    while not stopped:
-        try:
-            dataB = buffer2.popleft()   #pop element from left of buffer (oldest read_byte block)
-            if dataB is not None:
-                data = unpackB(dataB)
-                dsts.resize((ntracks,dsts.shape[1]+l_packet))
-                dsts[:,-l_packet:] = data
-            
-                for i in range(len(data)):#loop on tracks
-                    bound_cb = functools.partial(cb, i)
-                    for j in range(len(data[i])):#loop on samples
-                        spec[i].add(data[i,j], bound_cb)
-                    Y[i,:], f = spec[i].get()
-                if np.all(spectrumReady):#check if all done
-                    spectrumReady = np.zeros(ntracks)
-                    await websocket.send(packB(Y)) #return data: spectrum start frame, end frame, spectrum start time, end time,Y
-
-        except IndexError:              #don't stop if first reads are empty
-            continue
+    while True:
+        if not paused:
+            try:
+                dataB = buffer2.popleft()   #pop element from left of buffer (oldest read_byte block)
+                if dataB is not None:
+                    data = unpackB(dataB)
+                    if settings["record_data"]:
+                        dsts.resize((ntracks,dsts.shape[1]+l_packet))
+                        dsts[:,-l_packet:] = data
+                
+                    for i in range(len(data)):#loop on tracks
+                        bound_cb = functools.partial(cb, i)
+                        for j in range(len(data[i])):#loop on samples
+                            spec[i].add(data[i,j], bound_cb)
+                        Y[i,:], f = spec[i].get()
+                    if np.all(spectrumReady):#check if all done
+                        spectrumReady = np.zeros(ntracks)
+                        await websocket.send(packB(Y)) #return data: spectrum start frame, end frame, spectrum start time, end time,Y
+    
+            except IndexError:              #don't stop if first reads are empty
+                continue
         await asyncio.sleep(0.09)
 
     # print("--- %s seconds ---" % (time.time() - start_time))
@@ -158,19 +171,23 @@ async def useBfft(websocket, path, spec):
 
 #websocket3
 async def cmd(websocket, path):
-    global stopped
+    global paused
+    await websocket.send(json.dumps(settings)) 
     print('waiting cmd')
     async for message in websocket:
         data = json.loads(message)
-        print(data["action"])
+        print(data)
         
-        if data["action"] == "stop":
-            stopped = True
-            ser.close()
+        if data["action"] == "pause":
+            paused = True
+#            ser.close()
             
-#        if data["action"] == "start":
-#            stopped = False
-        
+        if data["action"] == "start":
+            paused = False
+            
+        if data["action"] == "settingsBool":
+            if data["n"] == "record_data":
+                settings["record_data"] = data["v"]
    
 async def serve(port,fn):
     return await websockets.serve(fn, "127.0.0.1", port)   
