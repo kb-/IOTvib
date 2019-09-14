@@ -7,7 +7,7 @@ Created on Fri Aug 16 21:43:24 2019
 import numpy as np
 from scipy import signal as sig
 from scipy.fftpack import fft
-import pandas as pd
+#import pandas as pd
 
 #TO DO: handle multiple tracks
 
@@ -110,6 +110,10 @@ class RingBuffer():
     
 #    def toFIle(self):
 #        self.df.to_hdf('fft_input.h5', 'table', append=True)
+
+#class file():
+#    def __init__(self, filename, chunkshape):
+#        
 
 if __name__ == '__main__':
     import argparse
