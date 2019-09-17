@@ -46,10 +46,6 @@ l_fmt = struct.calcsize(fmt)
 l_fmt2 = struct.calcsize(fmt2)
 
 paused = True
-settings = {
-    "record_data":True,
-    "record_fft":False
-}
 
 cnt = 0
 buffer = collections.deque()            #read/outgoing data buffer
@@ -57,6 +53,14 @@ buffer2 = collections.deque()           #spectrum outgoing data buffer
 
 df = 1                                  #FFT resolution (s)
 fftlines = fs/df
+
+settings = {
+    "record_data":True,
+    "record_fft":False,
+    "fft":{
+            "nlines":fftlines
+            }
+}
 
 ntracks = 3
 spectrum = []
