@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
 #
-# get binary data from Arduino, transfer binary data to browser + 3 fft tracks
-# ok :)
+# get binary data from Arduino, transfer binary data to browser
+#ok :)
 
 import threading
 import serial
 import struct
 import time
 import collections
-#from concurrent.futures import ThreadPoolExecutor
 import asyncio
 import functools
 #import datetime
 #import random
 import websockets
-from spectralc1 import spectral
+from spectralc import spectral
 import numpy as np
 #import traceback, sys, code
 #import struct
@@ -25,11 +24,11 @@ baud = 500000     #read fast! don't lose too much CPU cycles reading
 l_packet = 320    #0.1 s of data at 3200 Hz
 
 #sensor data
-fs = 3200
+datafreq = 3200
 xGain = 0.00376390                      #gain from ADXL345 X axis
-fmt = "<bIIhhhHb" #incoming data format: sync byte, size byte, time uint32, count uint 32, xyz int16, spare uint16
+fmt = "<bbIIhhhH" #incoming data format: sync byte, size byte, time uint32, count uint 32, xyz int16, spare uint16
 
-fmt2 = "<fff"       #outgoing FFT data format
+fmt2 = "<f"       #outgoing FFT data format
 
 try:
     ser = serial.Serial(port, baud, timeout=1)
@@ -39,28 +38,23 @@ except serial.SerialException:
     
 l_fmt = struct.calcsize(fmt)
 
-l_fmt2 = struct.calcsize(fmt2)
+l_fmt = struct.calcsize(fmt)
 
 cnt = 0
 buffer = collections.deque()            #read/outgoing data buffer
 buffer2 = collections.deque()           #spectrum outgoing data buffer
 
 df = 1                                  #FFT resolution (s)
-fftlines = fs/df
-#fft_block_size = fftlines*10  #data block for FFT calculation (set larger than FFT lines to allow averaging)
+fftlines = datafreq/df
+fft_block_size = fftlines*10  #data block for FFT calculation (set larger than FFT lines to allow averaging)
 
-ntracks = 3
-spectrum = []
-for i in range(ntracks):
-    spectrum.append(spectral(fs, fftlines, overlap=0.75, win='hann', averaging='lin',nAverage=10))
-
-
+spectrum = spectral(fft_block_size)
 
 def read_from_port(s, appendData, appendData2):
     syncB(s, s.read(l_fmt*2))           #sync data with 2 samples
     while True:
-        if s.inWaiting() > l_fmt*l_packet:
-            read_byte = s.read(l_fmt*l_packet)    #read 0.1 s of data
+        if s.inWaiting() > 5760:
+            read_byte = s.read(5760)    #read 0.1 s of data
             if read_byte is not None:
                 appendData(read_byte)   #append element to right of buffer
                 appendData2(read_byte)
@@ -88,48 +82,30 @@ async def useB(websocket, path):
 
     # print("--- %s seconds ---" % (time.time() - start_time))
     # print('done')
-x = np.zeros(l_packet)
-y = np.zeros(l_packet)
-z = np.zeros(l_packet)
 
 def unpackB(b):
     cnt = 0
     #print(len(b))
 #    print(b)
-    for i in range(l_packet):
+    x = np.zeros(l_packet)
+    for i in range(l_packet-1):
         d=struct.unpack_from(fmt, b[i*l_fmt:(i+1)*l_fmt])
-        x[cnt] = d[3]#*xGain            #x axis
-        y[cnt] = d[4]                   #y axis
-        z[cnt] = d[5]                   #z axis
+        x[cnt] = d[4]*xGain             #x axis
 #        df.loc[cnt] = x
         #print(x)
         cnt+=1
-    return np.array([x,y,z])
+    return x
 
 def packB(d):           #d is 2d array
     b = []
-    for i in range(len(d[0])):
-        args = (fmt2,)+tuple(d[:,i])
-        b += struct.pack(*args)
+    for r in d:         #loop on rows
+        for e in r:     #loop on elemets in row
+            b += struct.pack(fmt2, e)
     return bytearray(b)
 
-spectrumReady = np.zeros(ntracks)
-
-def cb(i):
-    global spectrumReady 
-    spectrumReady[i] = True
-#    print(spectrumReady)
-#                    y = spec.flush_fft_buffer()
-#                    Y = spec.fft_spectrum(y, fs, fftlines, 0.75, 'hann')
-#                    d = Y[:int(len(Y)/2)]
-    
-    return True
 #websocket2
-Y = np.zeros([ntracks,int(np.ceil(fftlines/2))])
 async def useBfft(websocket, path, spec):
-    global spectrumReady
     # start_time = time.time()
-    
     while True:
         try:
             dataB = buffer2.popleft()   #pop element from left of buffer (oldest read_byte block)
@@ -140,26 +116,13 @@ async def useBfft(websocket, path, spec):
 #                
 #                await websocket.send(dataBout)
 
-            for i in range(len(data)):
-                bound_cb = functools.partial(cb, i)
-                for j in range(len(data[i])):
-#                bound_specAdd = functools.partial(cb, spectrumReady)
-#                if np.all(spectrumReady==0):#check if none done
-                    spec[i].add(data[i,j], bound_cb)
-                Y[i,:], f = spec[i].get()
-#                print(spectrumReady)
-            if np.all(spectrumReady):#check if all done
-                spectrumReady = np.zeros(ntracks)
-#                    print(np.max(Y[10:]))
-                await websocket.send(packB(Y)) #return data: spectrum start frame, end frame, spectrum start time, end time,Y
-                    
-#                    print(max(Y))
-#                bound_specAdd = functools.partial(spec.add, s, cb)                
-#                task = asyncio.ensure_future(await spec.add(s, cb))
-#                task = add_success_callback(task, cb)
-#                loop.run_until_complete(task)
-#                await loop.run_in_executor(_executor, bound_specAdd)                
-
+                #TO DO: use a numpy ring buffer,  https://scimusing.wordpress.com/2013/10/25/ring-buffers-in-pythonnumpy/
+                isFull = spec.fill_fft_buffer(data)
+                if isFull:
+                    y = spec.flush_fft_buffer()
+                    Y = spec.fft_spectrum(y, datafreq, fftlines, 0.75, 'hann')
+                    d = Y[:int(len(Y)/2)]
+                    await websocket.send(packB(d)) #return data: spectrum start frame, end frame, spectrum start time, end time,Y
         except IndexError:              #don't stop if first reads are empty
             continue
         await asyncio.sleep(0.09)
@@ -174,11 +137,7 @@ async def useBfft(websocket, path, spec):
 
     # print("--- %s seconds ---" % (time.time() - start_time))
     # print('done')
-async def add_success_callback(fut, callback):
-    result = await fut
-    await callback(result)
-    return result
-   
+    
 async def serve(port,fn):
     return await websockets.serve(fn, "127.0.0.1", port)   
 
@@ -190,9 +149,8 @@ try:
     thread = threading.Thread(target=read_from_port, args=(ser,buffer.append,buffer2.append))
     thread.start()
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(runTogether())
-    loop.run_forever()
+    asyncio.get_event_loop().run_until_complete(runTogether())
+    asyncio.get_event_loop().run_forever()
         
 except KeyboardInterrupt:
     ser.close()

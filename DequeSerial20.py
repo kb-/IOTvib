@@ -23,23 +23,19 @@ import h5py
 #import traceback, sys, code
 #import struct
 
-#read Arduino param
+#Arduino serial settings
 port = 'COM9'
 baud = 500000     #read fast! don't lose too much CPU cycles reading
 
 #sensor data
 fs = 800
 l_packet = int(fs/10)    #0.1 s of data at 3200 Hz
-xGain = 0.00376390                      #gain from ADXL345 X axis
+
+ntracks = 3
+
 fmt = "<bIIhhhHb" #incoming data format: sync byte, size byte, time uint32, count uint 32, xyz int16, spare uint16
 
 fmt2 = "<fff"       #outgoing FFT data format
-
-try:
-    ser = serial.Serial(port, baud, timeout=1)
-except serial.SerialException:
-    ser.close()
-    raise
     
 l_fmt = struct.calcsize(fmt)
 
@@ -52,20 +48,32 @@ buffer = collections.deque()            #read/outgoing data buffer
 buffer2 = collections.deque()           #spectrum outgoing data buffer
 
 df = 1                                  #FFT resolution (s)
+overlap = 0.75                          #FFT block overlap (0 <= overlap <1; 0 = no overlap)
+                                        #TO DO: test all FFT settings
+
 fftlines = fs/df
 
 settings = {
     "record_data":True,
     "record_fft":False,
     "fft":{
-            "nlines":fftlines
+            "nlines":fftlines,
+            "df":df,
+            "overlap":overlap,
+            "t_step":1./df*(1.-overlap)
             }
 }
 
-ntracks = 3
+#open serial connection with Arduno
+try:
+    ser = serial.Serial(port, baud, timeout=1)
+except serial.SerialException:
+    ser.close()
+    raise
+
 spectrum = []
 for i in range(ntracks):
-    spectrum.append(spectral(fs, fftlines, overlap=0.75, win='hann', averaging='exp',nAverage=10))
+    spectrum.append(spectral(fs, fftlines, overlap=overlap, win='hann', averaging='exp',nAverage=10))
 
 #create hdf5 file
 if os.path.exists("file.h5"):

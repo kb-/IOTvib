@@ -5,8 +5,8 @@
 //https://plot.ly/javascript/reference/#surface-colorbar-tickfont-size
 //https://plot.ly/javascript/reference/#surface-colorscale
 //https://plot.ly/javascript/reference/#surface-hoverlabel
-//https://plot.ly/javascript/reference/#layout-scene-camera-projection
-//https://plot.ly/javascript/reference/#layout-scene-aspectratio
+//ok https://plot.ly/javascript/reference/#layout-scene-camera-projection
+//ok https://plot.ly/javascript/reference/#layout-scene-aspectratio
 //https://plot.ly/javascript/reference/#layout-scene-xaxis-title-text
 //https://plot.ly/javascript/reference/#layout-scene-xaxis-type linear/log
 //https://plot.ly/javascript/reference/#layout-scene-annotations-items-annotation-captureevents
@@ -16,7 +16,8 @@
 
 // import
 //<script type="text/javascript" src="./plotly-latest.min.js" charset="utf-8"></script>
-export function surf(x,y,z){
+export function surf(divId,x,y,z){//"id",1d[],1d[],2d[]
+  console.log("surf")
   var layout = {
     scene:{
       aspectmode: "manual",
@@ -24,18 +25,27 @@ export function surf(x,y,z){
         x: 2, y: 1, z: 0.5,
       },
       camera:{
-        projection:"orthographic"
+        projection:{
+          type: "orthographic" 
+        },
+        ortho: true
       },
+      xaxis: {autorange: "reversed"},
+      yaxis: {autorange: "reversed"},
       zaxis: {
       }
     }
   }
-  var data = [{x:x, y:y, z: z, type: 'surface'}];
-  return Plotly.newPlot('Spectrogram', data);//returns promise
+  // var data = [{x:x, y:y, z: z, type: 'surface'}];
+  var data = [{x:x, y:y, z: z, type: 'heatmap'}];
+  return Plotly.newPlot(divId, data, layout).then(console.log("yo"));//returns promise
 }
 
-export function updateSurf(){
-  
-  
-  
+export function updateSurf(divId,x,y,z){//"id",1d[],1d[],2d[]
+  var update = {
+    // x: [x],
+    // y: [y],
+    z: [z]
+  }
+  return Plotly.update(divId, update).then(console.log("ye"));
 }

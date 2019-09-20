@@ -1,0 +1,131 @@
+<!-- get binary data from Python - Flot - WSserver6.py - ok, no slow down during test on 500kS-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Flot</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="../flot/jquery.canvaswrapper.js"></script>
+    <script src="../flot/jquery.colorhelpers.js"></script>
+    <script src="../flot/jquery.flot.js"></script>
+    <script src="../flot/jquery.flot.saturated.js"></script>
+    <script src="../flot/jquery.flot.browser.js"></script>
+    <script src="../flot/jquery.flot.drawSeries.js"></script>
+    <script src="../flot/jquery.flot.uiConstants.js"></script>
+    <script src="../flot/jquery.flot.downsample.js"></script>
+    <script src="../flot/datastream.js"></script>
+</head>
+<body>
+    <!-- prepare a DOM container with width and height -->
+    <div id="main" style="width: auto;height:400px;">
+    </div>
+    <script type="text/javascript">
+
+var XGAIN = 0.00376390;
+
+//https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+var def = [
+  'len','uint8',
+  't', 'uint32le',
+  'cnt', 'uint32le',
+  'x', 'int16le',
+  'y', 'int16le',
+  'z', 'int16le',
+  'info', 'uint16le',
+  'sync','uint8'
+];
+
+var options = {
+  series: {
+    shadowSize: 0,	// Drawing is faster without shadows
+    //downsample: { threshold: 2000 }//using Largest-Triangle-Three-Buckets downsampling plugin (best compromize between keeping visual features and performance) https://skemman.is/handle/1946/15343
+  },
+  yaxis: {
+    min: -16,
+    max: 16
+  },
+  xaxis: {
+    //show: false
+  }
+};
+var data = [];
+var plot = $.plot($("#main"), [data], options);
+
+var ws = new WebSocket("ws://127.0.0.1:5678/");
+ws.i=0;
+
+performance.mark("a");
+
+ws.onmessage = function (event) {
+  new Response(event.data).arrayBuffer().then(updateOption);//event.data is blob
+
+  function updateOption(a){
+    f = new Uint8Array(a);
+    performance.mark("b");
+    performance.measure("measure a to b","a", "b")
+/*     if(typeof(ws.tmpdata)==="undefined"){
+      ws.tmpdata = new makeArray(2,periodicExtract(f,18,2,10).length/2,.0);
+    } */
+    
+    var ds = new DataStream(f.buffer);
+    var obj = ds.readStruct(def);
+    var j=0;
+    var tmpdata = [];
+    while (!ds.isEof()) {
+      var obj = ds.readStruct(def);
+      // tmpdata.push([j+ws.i,obj.x*XGAIN]);
+      tmpdata.push([j+ws.i,obj.cnt]);
+      j++;
+    }
+    //x = Int16toFloat32(new Int16Array(periodicExtract(f,18,2,10).buffer));
+    
+    //data = data.concat(transpose([Array.apply(null, Array(x.length)).map(function (_, i) {return i+ws.i;}),x]));//[[t1,x1],[t2,x2],...] t=datapoint count, x=datapoint
+    //console.log(f);
+    
+    //var data1 = [[0,.1],[1,.1],[2,0],[3,.1],[4,-.1]];
+    
+    data = data.concat(tmpdata);
+    
+    plot.setData([data]);
+    plot.getOptions().xaxes[0].max = data[data.length-1][0];//ws.i+x.length;
+    plot.setupGrid();
+    plot.draw();
+    
+    ws.i=ws.i+f.length;
+  }
+};
+
+
+/*convert Int16Array to Float32Array*/
+/* var Int16toFloat32 = function(raw) {
+    var data   = new Int16Array(raw);
+    var output = new Float32Array(data.length);
+    for (var i = 0; i < data.length; i++) {
+        var int   = data[i];
+        var float = (int >= 0x8000) ? -(0x10000 - int) / 0x8000 : int / 0x7FFF;
+        output[i] = float;
+    }
+    return output;
+}; */
+
+function makeArray(w, h, val) {
+  var arr = [];
+  for(let i = 0; i < h; i++) {
+    arr[i] = [];
+    for(let j = 0; j < w; j++) {
+      arr[i][j] = val;
+    }
+  }
+  return arr;
+}
+
+//Extract "len" long data from array every "nth" element, starting at index "startIdx"
+//const periodicExtract = (arr, nth, len, startIdx) => arr.slice(startIdx,arr.length).filter((e,i) => ((i) % nth < len));
+function periodicExtract(arr, nth, len, startIdx){
+  return arr.slice(startIdx,arr.length).filter((e,i) => ((i) % nth < len));
+}
+
+function transpose(array){return array[0].map((col, i) => array.map(row => row[i]));}
+    </script>
+</body>
+</html>

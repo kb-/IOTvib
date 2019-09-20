@@ -22,11 +22,12 @@
     <script language="javascript" type="text/javascript" src="../js/jquery.flot.touch.js"></script>
     <script language="javascript" type="text/javascript" src="../js/jquery.flot.selection.js"></script>
     <script src="../js/datastream.js"></script>
-    <script src="../js/colormap.js"></script>
+    <script src="../js/colormap2test.js"></script><!-- https://www.npmjs.com/package/colormap -->
     <script type="text/javascript" src="../js/plotly.js" charset="utf-8"></script><!-- https://plot.ly/javascript/plotlyjs-function-reference/ -->
     <script src="../js/math.min.js"></script><!-- https://mathjs.org/docs/index.html -->
     <script src="../js/numjs.min.js"></script><!-- http://nicolaspanel.github.io/numjs/index.html -->
     <script src="../js/cbuffer.js"></script><!-- https://github.com/trevnorris/cbuffer -->
+    <script src="../js/canvas_spectrogram.js"></script>
     <!-- <script src="../js/three.js/build/three.js"></script> -->
     <!-- <script src="../js/GLTFLoader.js"></script> -->
     <!-- <script src="../js/DRACOLoader.js"></script> -->
@@ -503,13 +504,13 @@ function setSpectrogramXYaxis(){
 }
 
 //plotly is too slow. not for real time
-function plotSpectrogram(){
+function plotSpectrogram_(){
   if(!$("#Spectrogram").length)return;
   setSpectrogramXYaxis();
   if(typeof(window.spz)==="undefined")window.spz = nj.zeros([Math.floor(settings.fft.nlines/2),nfft]).tolist();
   plt.surf("Spectrogram",spx,spy,spz).then(function(e){
     console.log(e);
-    updateSpectrogram();
+    updateSpectrogram_();
   });
 /*   var r = initSpectrogram($(placeholder2).get(0),{x:nfft,y:Math.floor(settings.fft.nlines/2)});
   animate3d();
@@ -520,7 +521,7 @@ function plotSpectrogram(){
 }
 
 var old_cnt_ws2;
-window.updateSpectrogram = function updateSpectrogram(){
+window.updateSpectrogram_ = function updateSpectrogram(){
   console.log("updateSpectrogram",cnt_ws2,old_cnt_ws2);
   if(cnt_ws2==old_cnt_ws2){
     setTimeout(updateSpectrogram,10);
@@ -530,31 +531,55 @@ window.updateSpectrogram = function updateSpectrogram(){
     window.spz = transpose(cbufs[displayed_spectrogram_idx].slice());
     if(typeof(plt.updateSurf)==="function")plt.updateSurf("Spectrogram",spx,spy,spz).then(function(e){
       console.log(e);
-      updateSpectrogram();
+      updateSpectrogram_();
     });
     old_cnt_ws2 = cnt_ws2;
   }
 }
 
-function updateSpectrogram_(){
+function plotSpectrogram(){
+  if(!$("#Spectrogram").length)return;
+  setSpectrogramXYaxis();
+  if(typeof(window.spz)==="undefined")window.spz = nj.zeros([Math.floor(settings.fft.nlines/2),nfft]).tolist();
+  
+  if(!document.getElementById("SpectrogramCanvas")){
+    var container = document.createElement( 'div' );
+    container.setAttribute("id", "SpectrogramCanvas");
+    $("#Spectrogram")[0].appendChild( container );
+
+    window.Spectrogramcanvas = container.appendChild(document.createElement('canvas'));
+  }
+  
+  window.ctx = Spectrogramcanvas.getContext('2d');
+  ctx.canvas.width  = spx.length;
+  ctx.canvas.height = spy.length;
+}
+
+window.updateSpectrogram = function updateSpectrogram(){
   window.d = cbufs[displayed_spectrogram_idx].slice();
   if($("#Spectrogram").length){
-    if(typeof(scene)!="undefined"){
-      if(typeof(window.objSpectrogram)=="undefined"){
-        window.objSpectrogram = scene.getObjectByName("Spectrogram");
-        scene.background = new THREE.Color( 0xffffff  );
-        window.spz = zeros([Math.floor(settings.fft.nlines/2),nfft]);
+        window.spz = transpose(cbufs[displayed_spectrogram_idx].slice());
         //window.spcolor = new THREE.Color();
-      }else{
         
-        fill(spz, function(a,b) {
-          return typeof(d[b])!=="undefined"?d[b][a]:0;
-        });
+        // fill(spz, function(a,b) {
+          // return typeof(d[b])!=="undefined"?d[b][a]:0;
+        // });
+        
         // var col = colorize(spz);
-        var col = colorize(spz,{colormap:"jet"}).data;
+       var col = colorize(ndarray(spz.flat(),[spz.length,spz[0].length]).transpose(),{colormap:"jet",rgba:true,alpha:1}).data;
+       //var col = colorize(ndarray(spz.flat(),[spz[0].length, spz.length]),{colormap:"jet"}).data;
         
+        var imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+        //window.SPdata = imageData.data;
         
-        for(var i = 0, ly = Math.floor(settings.fft.nlines/2); i < ly; i++){
+        //SPdata = col;
+        console.log(spz, imageData);
+        imageData.data.set(col);
+        console.log(col, imageData);
+        
+        ctx.putImageData(imageData, 0, 0);
+        
+/*         for(var i = 0, ly = Math.floor(settings.fft.nlines/2); i < ly; i++){
           for(var j = 0, lx = nfft; j < lx; j++){
             let idx = (i*lx+j);
             //objSpectrogram.geometry.attributes.position.array[idx*3+2] = d[0][i][1];//indexing: x,y,z,x,y,x...
@@ -568,17 +593,8 @@ function updateSpectrogram_(){
             //spz[(i+j*lx)] = d[0][j][1];
             //spz[(i+j*lx)] = d[0][j][1];
           }
-        }
-        //objSpectrogram.geometry.computeVertexNormals();
-        //objSpectrogram.geometry.computeFaceNormals();
-        
-        objSpectrogram.geometry.attributes.color.dynamic = true;
-        //objSpectrogram.geometry.attributes.color.array = col.data;
-        objSpectrogram.geometry.attributes.color.needsUpdate = true;
-        objSpectrogram.geometry.attributes.position.needsUpdate = true;
+        } */
       }
-    }
-  }
 }
 
 function plot3d(){
@@ -680,7 +696,7 @@ Math.diff = function(a){
   return r;
 }
 
-function transpose(array){return array[0].map((col, i) => array.map(row => row[i]));}
+window.transpose = function transpose(array){return array[0].map((col, i) => array.map(row => row[i]));}
     </script>
 </body>
 </html>

@@ -1,0 +1,101 @@
+<!-- get binary data from Python ok -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ECharts</title>
+    <!-- including ECharts file -->
+    <script src="echarts.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+</head>
+<body>
+    <!-- prepare a DOM container with width and height -->
+    <div id="main" style="width: auto;height:400px;">
+    </div>
+    <script type="text/javascript">
+var myChart = echarts.init(document.getElementById('main'));
+// show title. legend and empty axis
+/* var dataset = [['t','x'],[0,1],[1,1]];
+      option = {
+          dataset: {
+            source: [dataset]
+          },
+          xAxis: {
+              type: 'category'
+          },
+          yAxis: {
+              type: 'value'
+          },
+          series: [{
+              encode: {
+                  // Map dimension "amount" to the X axis.
+                  x: 't',
+                  // Map dimension "product" to the Y axis.
+                  y: 'x'
+              },
+              type: 'bar'
+          }]
+      }; */
+var dataset = [['t','x']];
+      option = {
+          dataset: {
+            source: dataset
+          },
+          xAxis: {
+              type: 'value'
+          },
+          yAxis: {
+              type: 'value'
+          },
+          series: [{
+              encode: {
+                  // Map dimension "amount" to the X axis.
+                  x: 't',
+                  // Map dimension "product" to the Y axis.
+                  y: 'x'
+              },
+              type: 'line'
+          }]
+      };
+
+if (option && typeof option === "object") {
+    myChart.setOption(option);
+}
+
+var ws = new WebSocket("ws://127.0.0.1:5678/");
+ws.i=0;
+
+ws.onmessage = function (event) {
+    new Response(event.data).arrayBuffer().then(updateOption);//event.data is blob
+    
+    function updateOption(a){
+      f = new Float32Array(a);
+      dataset.push([ws.i,f*1])
+      console.log(f);
+      option = {
+          dataset: {
+            source: dataset
+          },
+/*           xAxis: {
+              type: 'value'
+          },
+          yAxis: {
+              type: 'value'
+          },
+          series: [{
+              encode: {
+                  // Map dimension "amount" to the X axis.
+                  x: 't',
+                  // Map dimension "product" to the Y axis.
+                  y: 'x'
+              },
+              type: 'line'
+          }] */
+      };
+      myChart.setOption(option);
+      ws.i++;
+    }
+};
+    </script>
+</body>
+</html>

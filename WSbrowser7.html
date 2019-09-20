@@ -1,0 +1,68 @@
+<!-- get binary data from Python - Flot - WSserver6.py - ok, no slow down during test on 500kS-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Flot</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="../flot/jquery.canvaswrapper.js"></script>
+    <script src="../flot/jquery.colorhelpers.js"></script>
+    <script src="../flot/jquery.flot.js"></script>
+    <script src="../flot/jquery.flot.saturated.js"></script>
+    <script src="../flot/jquery.flot.browser.js"></script>
+    <script src="../flot/jquery.flot.drawSeries.js"></script>
+    <script src="../flot/jquery.flot.uiConstants.js"></script>
+    <script src="../flot/jquery.flot.downsample.js"></script>
+</head>
+<body>
+    <!-- prepare a DOM container with width and height -->
+    <div id="main" style="width: auto;height:400px;">
+    </div>
+    <script type="text/javascript">
+
+var options = {
+			series: {
+                shadowSize: 0,	// Drawing is faster without shadows
+                downsample: { threshold: 2000 }//using Largest-Triangle-Three-Buckets downsampling plugin (best compromize between keeping visual features and performance) https://skemman.is/handle/1946/15343
+			},
+			yaxis: {
+				min: -1,
+				max: 1
+			},
+			xaxis: {
+				//show: false
+			}
+		};
+var data = [];
+var plot = $.plot($("#main"), [data], options);
+
+
+
+var ws = new WebSocket("ws://127.0.0.1:5678/");
+ws.i=0;
+
+ws.onmessage = function (event) {
+    new Response(event.data).arrayBuffer().then(updateOption);//event.data is blob
+    
+    function updateOption(a){
+      f = new Float32Array(a);
+      data = data.concat(transpose([Array.apply(null, Array(f.length)).map(function (_, i) {return i+ws.i;}),f]));//[[t1,x1],[t2,x2],...] t=datapoint count, x=datapoint
+      //console.log(f);
+      
+      //var data1 = [[0,.1],[1,.1],[2,0],[3,.1],[4,-.1]];
+      
+      plot.setData([data]);
+      plot.getOptions().xaxes[0].max = ws.i+f.length;
+      plot.setupGrid();
+      plot.draw();
+      
+      ws.i=ws.i+f.length;
+    }
+};
+
+
+
+function transpose(array){return array[0].map((col, i) => array.map(row => row[i]));}
+    </script>
+</body>
+</html>
