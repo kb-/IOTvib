@@ -33,24 +33,13 @@ function drawSpectrogram(elt,x,y,z) {
   
   ctx.canvas.width  = width;
   ctx.canvas.height = height;  
+
   
   
   // let i;
   // let j;
-
-  // for (i = 0; i < x.length; i++) {
-    // for (j = 0; j < y.length; j++) {
-      // let colorIdx = Math.floor(z[j][i]/range*col_range);
-      // window.colidx.push(colorIdx);
-      // ctx.fillStyle = colors[colorIdx];
-      // ctx.fillRect(
-        // i,
-        // y.length - j,
-        // 1,
-        // 1
-      // );
-    // }
-  // }
+  
+  
 }
 
 //drawSpectrogram($(placeholder2).get(0),spx,spy,spz)

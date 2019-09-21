@@ -60,6 +60,17 @@
       transition: margin-left .5s;
       padding: 16px;
     }
+    
+    #ttip {
+      position: absolute;
+      user-select: none;
+      pointer-events: none;
+    }
+    
+    #SpectrogramCanvas canvas{
+      width: 100%;
+      height: 450px;
+    }
 
     </style>
 </head>
@@ -587,44 +598,55 @@ window.updateSpectrogram = function updateSpectrogram(){
   window.d = cbufs[displayed_spectrogram_idx].slice();
   if($("#Spectrogram").length){
         window.spz = transpose(cbufs[displayed_spectrogram_idx].slice());
-        //window.spcolor = new THREE.Color();
-        
-        // fill(spz, function(a,b) {
-          // return typeof(d[b])!=="undefined"?d[b][a]:0;
-        // });
-        
-        // var col = colorize(spz);
-       var col = colorize(ndarray(spz.slice().reverse().flat(),[spz.length,spz[0].length]).transpose(),{colormap:"jet",rgba:true,alpha:255}).data;//copy array with slice, flipud, convert to 1d, convert tondarray, transpose, get matching colormap
-       //var col = colorize(ndarray(spz.flat(),[spz[0].length, spz.length]),{colormap:"jet"}).data;
+       var col = colorize(ndarray(spz.slice().reverse().flat(),[spz.length,spz[0].length]).transpose(),{colormap:"jet",rgba:true,alpha:255}).data;
         
         var imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
-        //ctx.scale(1, -1);
-        //window.SPdata = imageData.data;
-        
-        //SPdata = col;
-        // console.log(spz, imageData);
         imageData.data.set(col);
-        // console.log(col, imageData);
         
         ctx.putImageData(imageData, 0, 0);
-        
-/*         for(var i = 0, ly = Math.floor(settings.fft.nlines/2); i < ly; i++){
-          for(var j = 0, lx = nfft; j < lx; j++){
-            let idx = (i*lx+j);
-            //objSpectrogram.geometry.attributes.position.array[idx*3+2] = d[0][i][1];//indexing: x,y,z,x,y,x...
-            objSpectrogram.geometry.attributes.position.setZ(idx, spz.data[idx]);//indexing: x,y,z,x,y,x...
-            objSpectrogram.geometry.attributes.color.setXYZ( 
-              idx, 
-              col[idx*3+0], 
-              col[idx*3+1], 
-              col[idx*3+2] 
-            );
-            //spz[(i+j*lx)] = d[0][j][1];
-            //spz[(i+j*lx)] = d[0][j][1];
-          }
-        } */
       }
 }
+
+$(function(){
+  $(document ).on("mouseenter", "#SpectrogramCanvas canvas", function(e) {
+    if(!$('#ttip').length)$("#SpectrogramCanvas").append('<div id="ttip">');
+    $('#ttip').show();
+  }).on("mouseleave", "#SpectrogramCanvas canvas", function(e) {
+    $('#ttip').hide();
+  });
+  $(document ).on("mousemove", "#SpectrogramCanvas canvas", function(e) {
+        var mouseX, mouseY;
+        
+      var scaleX = ctx.canvas.width / ctx.canvas.offsetWidth;   // relationship bitmap vs. element for X
+      var scaleY = ctx.canvas.height / ctx.canvas.offsetHeight;  // relationship bitmap vs. element for Y
+
+        if(e.offsetX) {
+            mouseX = e.offsetX* scaleX;
+            mouseY = e.offsetY* scaleY;
+        }
+        else if(e.layerX) {
+            mouseX = e.layerX* scaleX;
+            mouseY = e.layerY* scaleY;
+        }
+        // var c = ctx.getImageData(mouseX, mouseY, 1, 1).data;
+
+        $('#ttip').css({'left':mouseX+20, 'top':mouseY+20}).html("f:"+(Math.round((ctx.canvas.height-mouseY)/settings.fft.df)*settings.fft.df).toPrecision(4)+" Hz  \n a:"+spz[Math.round(ctx.canvas.height - mouseY)][Math.round(mouseX)].toPrecision(4)+" g");
+        
+        // console.log(mouseX, mouseY);
+  });
+});
+
+/* function findPos(obj) {
+    var curleft = 0, curtop = 0;
+    if (obj.offsetParent) {
+        do {
+            curleft += obj.offsetLeft;
+            curtop += obj.offsetTop;
+        } while (obj = obj.offsetParent);
+        return { x: curleft, y: curtop };
+    }
+    return undefined;
+} */
 
 function plot3d(){
   

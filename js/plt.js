@@ -16,7 +16,8 @@
 
 // import
 //<script type="text/javascript" src="./plotly-latest.min.js" charset="utf-8"></script>
-export function surf(divId,x,y,z){//"id",1d[],1d[],2d[]
+export function surf(divId,x,y,z,type){//"id",1d[],1d[],2d[]
+  type = typeof(type)!="undefined"?type:"heatmap";
   console.log("surf")
   var layout = {
     scene:{
@@ -36,9 +37,9 @@ export function surf(divId,x,y,z){//"id",1d[],1d[],2d[]
       }
     }
   }
-  // var data = [{x:x, y:y, z: z, type: 'surface'}];
-  var data = [{x:x, y:y, z: z, type: 'heatmap'}];
-  return Plotly.newPlot(divId, data, layout).then(console.log("yo"));//returns promise
+  //var data = [{x:x, y:y, z: z, type: 'surface'}];
+  var data = [{x:x, y:y, z: z, colorscale: 'Jet', type: type}];
+  return Plotly.newPlot(divId, data, layout);//returns promise
 }
 
 export function updateSurf(divId,x,y,z){//"id",1d[],1d[],2d[]
@@ -47,5 +48,5 @@ export function updateSurf(divId,x,y,z){//"id",1d[],1d[],2d[]
     // y: [y],
     z: [z]
   }
-  return Plotly.update(divId, update).then(console.log("ye"));
+  return Plotly.update(divId, update);
 }
