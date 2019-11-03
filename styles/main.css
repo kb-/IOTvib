@@ -1,0 +1,155 @@
+.sidebar {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  transition: 0.25s;
+  color: #818181;
+}
+
+.sidebar h1{
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  display: block;
+  transition: 0.15s;
+}
+
+.sidebar div{
+  padding-left: 10px;
+}
+
+#settings_btn{
+  height: 22px;
+  top: 3px;
+  position: relative;
+}
+
+#main {
+  transition: margin-left .5s;
+  padding: 16px;
+  height: 95%;
+}
+
+#ttip {
+  position: absolute;
+  user-select: none;
+  pointer-events: none;
+  color: white;
+}
+
+#SpectrogramCanvas canvas{
+  width: 100%;
+}
+
+#placeholder1, #placeholder2 {
+  resize: vertical;
+  overflow: hidden;
+  height:48%;
+}
+
+html,body {
+  padding:0;
+  margin:0;
+  height:100%;
+}
+#Spectrogram, #SpectrogramCanvas, #SpectrogramCanvas canvas{
+  height: 100%;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 30px;
+  height: 17px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .03s;
+  transition: .03s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 13px;
+  width: 13px;
+  left: 2px;
+  bottom: 2px;
+  background-color: black;
+  -webkit-transition: .03s;
+  transition: .03s;
+}
+
+input:checked + .slider {
+  /* background-color: #2196F3; */
+  /* background-color: #5c00b98a; */
+  background-color: #5c00b961; 
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(13px);
+  -ms-transform: translateX(13px);
+  transform: translateX(13px);
+}
+
+.settingsline{
+  padding: 0px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.rgtSettingsInput{
+  position: absolute;
+  width: 30px;
+  right: 10px;
+}
+
+select.rgtSettingsInput{
+  width: auto;
+}
+
+form input,form select{
+  color:#818181;
+  background-color:black;
+  border-width: 2px;
+  border-color:#818181;
+}
+
+input.readonly{
+  border: none;
+  background-color: inherit;
+}
+
+input[type=submit]:hover{
+  background-color: darkgray;
+}
+
+input[type=submit],button{
+  cursor: pointer;
+}
+
+:root {
+  scrollbar-color: #333 #111;
+}

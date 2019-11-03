@@ -1,0 +1,58 @@
+<!-- ok but too slow: 365 ms update -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>gl-plot</title>
+    <script src="./js/jquery-2.2.4.min.js"></script>
+    <!-- <script type="text/javascript" src="./js/glplot.js" charset="utf-8"></script> -->
+ <body>
+</body>
+<!-- <script type="module"> -->
+<script type="text/javascript">
+
+$(function(){
+  $.getScript("./js/glplot.js").done(function( script, textStatus ) {
+    // var createScene       = require('gl-plot3d').createScene
+    // var createSurfacePlot = require('gl-surface3d')
+    // var ndarray           = require('ndarray')
+    // var fill              = require('ndarray-fill')
+    // var diric             = require('dirichlet')
+     
+    window.scene = createScene();
+    
+    var h=1024,w=1024;
+     
+    var field = ndarray(new Float32Array(h*w), [h,w]);
+    fill(field, function(x,y) {
+      return 128 * diric(10, 10.0*(x-w/2)/w) * diric(10, 10.0*(y-h/2)/h);
+    })
+     
+    window.surface = createSurfacePlot({
+      gl:             scene.gl,
+      field:          field,
+      contourProject: true
+    });
+     
+    scene.add(surface);
+    
+    var field = ndarray(new Float32Array(h*w), [h,w]);
+      fill(field, function(x,y) {
+        return 256 * diric(10, 10.0*(x-w/2)/w) * diric(10, 10.0*(y-h/2)/h);
+      });
+    var opt = {
+        field:          field
+      };
+     
+     setTimeout(function(){
+      var t0 = performance.now();
+      surface.update(opt);surface.update(opt);surface.update(opt);surface.update(opt);surface.update(opt);
+      var t1 = performance.now();
+      console.log("Call to doSomething took " + (t1 - t0) + " milliseconds.");
+     },1000);
+    
+  });
+});
+
+</script>
+</html>

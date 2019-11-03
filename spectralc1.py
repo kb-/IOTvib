@@ -7,6 +7,7 @@ Created on Fri Aug 16 21:43:24 2019
 import numpy as np
 from scipy import signal as sig
 from scipy.fftpack import fft
+import calc
 #import pandas as pd
 
 #TO DO: handle multiple tracks

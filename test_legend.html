@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Flot</title>
+    <script src="../js/jquery-2.2.4.min.js"></script>
+    <script language="javascript" type="text/javascript" src="../js/jquery.event.drag.js"></script> 
+    <script language="javascript" type="text/javascript" src="../js/jquery.mousewheel.js"></script>
+    <script src="../js/jquery.canvaswrapper.js"></script>
+    <script src="../js/jquery.colorhelpers.js"></script>
+    <script src="../js/jquery.flot.js"></script>
+    <script src="../js/jquery.flot.saturated.js"></script>
+    <script src="../js/jquery.flot.browser.js"></script>
+    <script src="../js/jquery.flot.drawSeries.js"></script>
+    <script src="../js/jquery.flot.uiConstants.js"></script>
+    <!-- <script src="../js/jquery.flot.downsample.js"></script> -->
+    <!-- <script src="../js/jquery.flot.navigate.js"></script> -->
+    <!-- <script language="javascript" type="text/javascript" src="../js/jquery.flot.logaxis.js"></script> -->
+    <!-- <script language="javascript" type="text/javascript" src="../js/jquery.flot.touchNavigate.js"></script> -->
+    <!-- <script language="javascript" type="text/javascript" src="../js/jquery.flot.hover.js"></script> -->
+    <!-- <script language="javascript" type="text/javascript" src="../js/jquery.flot.touch.js"></script> -->
+    <!-- <script language="javascript" type="text/javascript" src="../js/jquery.flot.selection.js"></script> -->
+    <!-- <script language="javascript" type="text/javascript" src="../js/jquery.flot.resize.js"></script> -->
+    <script src="../js/datastream.js"></script>
+    <script src="../js/colormap3.js"></script><!-- https://www.npmjs.com/package/colormap 
+    http://scijs.net/packages/#scijs/ndarray-->
+    <!-- <script type="text/javascript" src="../js/plotly.js" charset="utf-8"></script><!-- https://plot.ly/javascript/plotlyjs-function-reference/ --> -->
+    <script src="../js/math.js"></script><!-- https://mathjs.org/docs/index.html -->
+    <script src="../js/numjs.js"></script><!-- http://nicolaspanel.github.io/numjs/index.html -->
+    <script src="../js/cbuffer.js"></script><!-- https://github.com/trevnorris/cbuffer -->
+    <script src="../js/canvas_spectrogram.js"></script>
+    <script src="../js/htmlJSON.js"></script>
+    <!-- <script src="../js/three.js/build/three.js"></script> -->
+    <!-- <script src="../js/GLTFLoader.js"></script> -->
+    <!-- <script src="../js/DRACOLoader.js"></script> -->
+    <link rel="stylesheet" href="./styles/main2.css">
+	<style type="text/css">
+#graphLoaderDiv{
+    width: 400px;
+    height: 400px;
+}
+
+    </style>
+</head>
+<body>
+<div id="graphLoaderDiv"></div>
+<button value="click">
+click me
+</button>
+<script type="module">
+
+import { init3d, animate3d, initSpectrogram } from '../js/3d_draw4.js';
+import { surf, updateSurf } from '../js/plt.js';
+import { distinct_colors } from '../js/distinct_colors.js';
+import { plotmarkers } from '../js/plot_tools.js';
+window.plt = {surf:surf,updateSurf:updateSurf};
+
+window.distinct_colors = distinct_colors;
+window.plotmarkers = plotmarkers;
+
+var gltf_file = "./assets/arrow.glb";
+// window.obj3d_name = "Xyz_Cube";
+window.obj3d_name = "arrow";
+window.objSpectrogram_name = "Spectrogram";
+
+var data1 = [];
+var data2 = [{
+    "label": "A",
+    "data": [[1290115114240, 0.7000], [1289396258877, 0.7000], [1289394738247, 0.7000], [1288482602563, 0.7000], [1288479321830, 0.7000], [1288464257267, 0.7000], [1288463414413, 0.7000], [1268440264933, 1.0000], [1268434766653, 1.0000], [1268059707567, 1.0000], [1265934534340, 1.0000]]},
+{
+    "label": "B",
+    "data": [[1290115102033, 6.0000], [1289395956947, 6.0000], [1289394743117, 6.0000], [1288482613967, 6.0000], [1288479332767, 6.0000], [1288464270420, 6.0000], [1288463427313, 6.0000], [1268440276413, 6.0000], [1268434778203, 6.0000], [1268059732683, 6.0000], [1265934545390, 6.0000]]}];
+    
+var options = {
+    series: {
+        points: {
+            show: true
+        },
+        lines: {
+            show: true
+        }
+    },
+    legend: { show: false }
+};
+
+window.h = $.plot($("#graphLoaderDiv"), data1, options);
+
+$('button').click(function(){
+	h.setData(data2);
+  h.getOptions().legend.show = true;
+  h.setupGrid(true);
+  h.draw();
+});
+</script>

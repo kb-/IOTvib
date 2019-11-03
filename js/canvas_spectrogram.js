@@ -26,7 +26,7 @@ function drawSpectrogram(elt,x,y,z) {
   
   const col_range = colors.length;
   const width = x.length;
-  const height = y.length;
+  const height = y[y.length-1];//y.length;
   
   var imageData = ctx.getImageData(0, 0, width, height);
   var data = imageData.data;

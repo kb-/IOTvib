@@ -537,7 +537,8 @@ window.onSpectrogramOption = function onSpectrogramOption(opt){
 }
 
 function setSpectrogramXYaxis(){
-  if(typeof(window.spx)==="undefined")window.spx = math.range(0, nfft*settings.fft.t_step, settings.fft.t_step).toArray();//start, end, step
+  let start = (cnt_ws2 - nfft)*settings.fft.t_step;
+  if(typeof(window.spx)==="undefined")window.spx = math.range(start, nfft*settings.fft.t_step+start, settings.fft.t_step).toArray();//start, end, step
   if(typeof(window.spy)==="undefined")window.spy = math.range(0, settings.fft.nlines/2, settings.fft.df).toArray();
 }
 
@@ -548,7 +549,7 @@ function plotSpectrogram_(type){
   setSpectrogramXYaxis();
   if(typeof(window.spz)==="undefined")window.spz = nj.zeros([Math.floor(settings.fft.nlines/2),nfft]).tolist();
   plt.surf("Spectrogram",spx,spy,spz,type).then(function(e){
-    console.log(e);
+    // console.log(e);
     updateSpectrogram_();
   });
 /*   var r = initSpectrogram($(placeholder2).get(0),{x:nfft,y:Math.floor(settings.fft.nlines/2)});
@@ -562,15 +563,17 @@ function plotSpectrogram_(type){
 var old_cnt_ws2;
 window.updateSpectrogram_ = function updateSpectrogram(){
   if(!$("#Spectrogram3dOpt:checked, #Spectrogram2dDetOpt:checked").length || !$("#Spectrogram").length)return;
-  console.log("updateSpectrogram",cnt_ws2,old_cnt_ws2);
+  // console.log("updateSpectrogram",cnt_ws2,old_cnt_ws2);
   if(cnt_ws2==old_cnt_ws2){
     setTimeout(updateSpectrogram,10);
     return false;//update if new data
   }else{
     setSpectrogramXYaxis();
+    let start = (cnt_ws2 - nfft)*settings.fft.t_step;
+    window.spx = math.range(start, nfft*settings.fft.t_step+start, settings.fft.t_step).toArray();
     window.spz = transpose(cbufs[displayed_spectrogram_idx].slice());
     if(typeof(plt.updateSurf)==="function")plt.updateSurf("Spectrogram",spx,spy,spz).then(function(e){
-      console.log(e);
+      // console.log(e);
       updateSpectrogram_();
     });
     old_cnt_ws2 = cnt_ws2;
@@ -618,26 +621,36 @@ $(function(){
   }).on("mouseleave", "#SpectrogramCanvas canvas", function(e) {
     $('#ttip').hide();
   });
-  $(document ).on("mousemove", "#SpectrogramCanvas canvas", function(e) {
-        var mouseX, mouseY;
-        
-      var scaleX = ctx.canvas.width / ctx.canvas.offsetWidth;   // relationship bitmap vs. element for X
-      var scaleY = ctx.canvas.height / ctx.canvas.offsetHeight;  // relationship bitmap vs. element for Y
-
-        if(e.offsetX) {
-            mouseX = e.offsetX* scaleX;
-            mouseY = e.offsetY* scaleY;
-        }
-        else if(e.layerX) {
-            mouseX = e.layerX* scaleX;
-            mouseY = e.layerY* scaleY;
-        }
-        // var c = ctx.getImageData(mouseX, mouseY, 1, 1).data;
-
-        $('#ttip').css({'left':mouseX+20, 'top':mouseY+20}).html("f:"+(Math.round((ctx.canvas.height-mouseY)/settings.fft.df)*settings.fft.df).toPrecision(4)+" Hz  \n a:"+spz[Math.round(ctx.canvas.height - mouseY)][Math.round(mouseX)].toPrecision(4)+" g");
-        
-        // console.log(mouseX, mouseY);
+  
+  setSpectrogramTooltip();
+  
+  $(document ).on("resize", "#SpectrogramCanvas", function(){
+    $(document ).off("mousemove");
+    setSpectrogramTooltip();
   });
+  
+  function setSpectrogramTooltip(){
+    $(document ).on("mousemove", "#SpectrogramCanvas canvas", function(e) {
+        var mouseX, mouseY;
+          
+        var scaleX = ctx.canvas.width / ctx.canvas.offsetWidth;   // relationship bitmap vs. element for X
+        var scaleY = ctx.canvas.height / ctx.canvas.offsetHeight;  // relationship bitmap vs. element for Y
+
+          if(e.offsetX) {
+              mouseX = e.offsetX* scaleX;
+              mouseY = e.offsetY* scaleY;
+          }
+          else if(e.layerX) {
+              mouseX = e.layerX* scaleX;
+              mouseY = e.layerY* scaleY;
+          }
+          // var c = ctx.getImageData(mouseX, mouseY, 1, 1).data;
+
+          $('#ttip').css({'left':mouseX+20, 'top':mouseY+20}).html("f:"+(Math.round((ctx.canvas.height-mouseY)/settings.fft.df)*settings.fft.df).toPrecision(4)+" Hz  \n a:"+spz[Math.round(ctx.canvas.height - mouseY)][Math.round(mouseX)].toPrecision(4)+" g");
+          
+          // console.log(mouseX, mouseY);
+    });
+  }
 });
 
 /* function findPos(obj) {

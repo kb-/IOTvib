@@ -1,0 +1,269 @@
+.sidebar {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  transition: 0.25s;
+  color: #818181;
+}
+
+.sidebar h1{
+  padding: 8px 8px 0px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  display: block;
+  transition: 0.15s;
+}
+
+.sidebar div{
+  padding-left: 10px;
+}
+
+#settings_btn{
+  height: 22px;
+  top: 3px;
+  position: relative;
+}
+
+#main {
+  transition: margin-left .5s;
+  padding: 16px;
+  height: 95%;
+}
+
+#ttip {
+  position: absolute;
+  user-select: none;
+  pointer-events: none;
+  color: white;
+}
+
+#SpectrogramCanvas canvas{
+  width: 100%;
+}
+
+#placeholder1, #mainrow2 {
+  resize: vertical;
+  overflow: hidden;
+  height:48%;
+}
+
+#placeholder2{
+  width: auto;
+  height: 100%;
+  position:relative;
+}
+
+.resizablev{
+  padding-bottom: 10px!important;
+}
+
+::-webkit-resizer {
+  cursor: row-resize;
+}
+
+#marker_table{
+  width: 30%;
+  position: relative;
+  float: right;
+}
+
+html,body {
+  padding:0;
+  margin:0;
+  height:100%;
+}
+#Spectrogram, #SpectrogramCanvas, #SpectrogramCanvas canvas{
+  height: 100%;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 30px;
+  height: 17px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .03s;
+  transition: .03s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 13px;
+  width: 13px;
+  left: 2px;
+  bottom: 2px;
+  background-color: black;
+  -webkit-transition: .03s;
+  transition: .03s;
+}
+
+input:checked + .slider {
+  /* background-color: #2196F3; */
+  /* background-color: #5c00b98a; */
+  background-color: #5c00b961; 
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(13px);
+  -ms-transform: translateX(13px);
+  transform: translateX(13px);
+}
+
+.settingsline{
+  padding: 0px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.rgtSettingsInput{
+  position: absolute;
+  width: 30px;
+  right: 10px;
+}
+
+select.rgtSettingsInput{
+  width: auto;
+}
+
+.sidebar input, select, .sidebar button{
+  color:#818181;
+  background-color:black;
+  border-width: 2px;
+  border-color:#818181;
+}
+
+input.readonly{
+  border: none;
+  background-color: inherit;
+}
+
+input[type=submit]:hover{
+  background-color: darkgray;
+}
+
+input[type=submit],button{
+  cursor: pointer;
+}
+
+:root {
+  scrollbar-color: #333 #111;
+}
+
+::-webkit-scrollbar {
+  scrollbar-color: #333 #111;
+}
+::-webkit-scrollbar-track{
+  background: #111; 
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+}
+
+.sub{
+    vertical-align:sub;
+    font-size:66%
+}
+
+#clickdata{
+  bottom: 0;
+  position: absolute;
+}
+
+#marker_table, #placeholder2 {
+  -webkit-transition: .05s;
+  transition: .05s;
+}
+
+.sidebar h2{
+  font-size: 12px;
+}
+
+table{
+  font-size:12px;
+  text-align: left;
+  border-collapse: collapse;
+  cursor: cell;
+}
+
+
+table span{/* transparent to clicks */
+  pointer-events: none;
+}
+
+#marker_table tbody td:first-child{
+ border-left-style: solid;
+ padding-left: 2px;
+}
+
+.selected {
+  background-color: rgba(79, 91, 193, 0.5);
+}
+
+table ::selection{
+  background-color: rgba(79, 91, 193, 0.5);
+}
+
+#main{
+  padding-bottom: 0px;
+  padding-top: 0px;
+}
+
+.flot-overlay, #SpectrogramCanvas{
+  cursor: crosshair;
+}
+
+.wide_input{
+  width: 45%;
+}
+
+.help{
+  margin-left: 3px;
+  cursor: help;
+}
+
+.legend {
+    font-size: 0.715em;
+		display: block;
+		-webkit-padding-start: 2px;
+		-webkit-padding-end: 2px;
+		border-width: initial;
+		border-style: none;
+		border-color: initial;
+		border-image: initial;
+		padding-left: 10px;
+        padding-right: 10px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+}
+
+.legendLayer .background {
+    fill: rgba(255, 255, 255, 0.85);
+    stroke: rgba(0, 0, 0, 0.85);
+    stroke-width: 1;
+}

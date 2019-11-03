@@ -1,0 +1,1310 @@
+<!-- get binary data from Python - Flot - DequeSerial25.py - FFT options & pointer marker table ok-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Flot</title>
+    <script src="../js/jquery-2.2.4.min.js"></script>
+    <script language="javascript" type="text/javascript" src="../js/jquery.event.drag.js"></script> 
+    <script language="javascript" type="text/javascript" src="../js/jquery.mousewheel.js"></script>
+    <script src="../js/jquery.canvaswrapper.js"></script>
+    <script src="../js/jquery.colorhelpers.js"></script>
+    <script src="../js/jquery.flot.js"></script>
+    <script src="../js/jquery.flot.saturated.js"></script>
+    <script src="../js/jquery.flot.browser.js"></script>
+    <script src="../js/jquery.flot.drawSeries.js"></script>
+    <script src="../js/jquery.flot.uiConstants.js"></script>
+    <script src="../js/jquery.flot.downsample.js"></script>
+    <script src="../js/jquery.flot.navigate.js"></script>
+    <script language="javascript" type="text/javascript" src="../js/jquery.flot.logaxis.js"></script>
+    <script language="javascript" type="text/javascript" src="../js/jquery.flot.touchNavigate.js"></script>
+    <script language="javascript" type="text/javascript" src="../js/jquery.flot.hover.js"></script>
+    <script language="javascript" type="text/javascript" src="../js/jquery.flot.touch.js"></script>
+    <script language="javascript" type="text/javascript" src="../js/jquery.flot.selection.js"></script>
+    <script language="javascript" type="text/javascript" src="../js/jquery.flot.resize.js"></script>
+    <script src="../js/datastream.js"></script>
+    <script src="../js/colormap3.js"></script><!-- https://www.npmjs.com/package/colormap 
+    http://scijs.net/packages/#scijs/ndarray-->
+    <script type="text/javascript" src="../js/plotly.js" charset="utf-8"></script><!-- https://plot.ly/javascript/plotlyjs-function-reference/ -->
+    <script src="../js/math.js"></script><!-- https://mathjs.org/docs/index.html -->
+    <script src="../js/numjs.js"></script><!-- http://nicolaspanel.github.io/numjs/index.html -->
+    <script src="../js/cbuffer.js"></script><!-- https://github.com/trevnorris/cbuffer -->
+    <script src="../js/canvas_spectrogram.js"></script>
+    <script src="../js/htmlJSON.js"></script>
+    <!-- <script src="../js/three.js/build/three.js"></script> -->
+    <!-- <script src="../js/GLTFLoader.js"></script> -->
+    <!-- <script src="../js/DRACOLoader.js"></script> -->
+    <link rel="stylesheet" href="./styles/main2.css">
+	<style type="text/css">
+
+
+    </style>
+</head>
+<body>
+    <div id="sidebar" class="sidebar">
+      <div>
+          <h1>Record</h1>
+          <label class="switch"><input id="record_data" type="checkbox" name="record_data"><span class="slider"></span></label>
+          <label for="record_data">Data</label>
+          <label class="switch"><input id="record_fft" type="checkbox" name="record_fft"><span class="slider"></span></label>
+          <label for="record_fft">FFT</label>
+          
+          <h1>Display</h1>
+          <select id="select_display2" name="select_display2" autocomplete="off">
+              <option value="Spectrum" selected>Spectrum</option>
+              <option value="Spectrogram">Spectrogram</option>
+              <option value="3D">Orientation</option>
+          </select>
+          <label for="select_display2">On 2nd display</label>
+          <div id="SpectrogramOpt" hidden>
+              <select id="SpectrogramTrack" autocomplete="off">
+                  <option value=0 selected>X</option>
+                  <option value=1>Y</option>
+                  <option value=2>Z</option>
+              </select>
+              <input id="Spectrogram2dOpt" type="radio" name="SpectrogramOption" onclick="onSpectrogramOption(this);" value="2d" autocomplete="off" checked/>
+              <label for="Spectrogram2dOpt">2D fast</label>
+              <input id="Spectrogram2dDetOpt" type="radio" name="SpectrogramOption" onclick="onSpectrogramOption(this);" value="2d_detailed" autocomplete="off"/>
+              <label for="Spectrogram2dDetOpt">2D</label>
+              <input id="Spectrogram3dOpt" type="radio" name="SpectrogramOption" onclick="onSpectrogramOption(this);" value="3d" autocomplete="off"/>
+              <label for="Spectrogram3dOpt">3D</label>
+           </div>
+           
+          <h1>FFT</h1>
+          <!-- <h2>Calculation</h1> -->
+          <form id="fft_settings">
+              <div class="settingsline">
+                  <label for="fft-df">Δf (Hz)</label>
+                  <input type="text" name="fft-df" id="fft-df" value="1" class="rgtSettingsInput"/>
+              </div>
+              <div class="settingsline">
+                  <label for="fft-nlines"># lines</label>
+                  <input type="text" name="fft-nlines" id="fft-nlines" class="rgtSettingsInput readonly" readonly/>
+              </div>
+              <div class="settingsline">
+                  <label for="fft-overlap_pct">Overlap (%)</label>
+                  <input type="text" name="fft-overlap_pct" id="fft-overlap_pct" class="rgtSettingsInput"/>
+              </div>
+              <div class="settingsline">
+                  <label for="fft-win">Window</label>
+                  <select name="fft-win" id="fft-win" class="rgtSettingsInput">
+                  </select>
+              </div>
+              <div id="fft-windowopt" class="settingsline">
+              </div>
+              <div class="settingsline">
+                  <label for="fft-averaging">Averaging</label>
+                  <select name="fft-averaging" id="fft-averaging" class="rgtSettingsInput">
+                  </select>
+              </div>
+              <div id="fft-averagingopt" class="settingsline">
+              </div>
+              <div class="settingsline">
+                  <input type="submit" value="Apply">
+              </div>
+          </form>
+          <h2>Markers</h1>
+          <div class="settingsline">
+            <label class="switch"><input id="FFTmarkerSwitch" type="checkbox" autocomplete="off"><span class="slider"></span></label>
+            <label for="FFTmarkerSwitch">Add</label>
+          </div>
+          <div class="settingsline">
+            <label class="switch"><input id="FFTmarkerTableSwitch" type="checkbox" autocomplete="off"><span class="slider"></span></label>
+            <label for="FFTmarkerTableSwitch">Show Table</label>
+          </div>
+          <div class="settingsline">
+            <label class="switch"><input id="FFTmarkerTableEdit" type="checkbox" autocomplete="off"><span class="slider"></span></label>
+            <label for="FFTmarkerTableEdit">Edit Table</label>
+            <div id="FFTmarkerTableEditOpt" hidden>
+              <button type="button" title="Delete marker">Delete</button>
+            </div>
+          </div>
+      </div> 
+    </div>
+    <div id="main">
+      <button type="button" onclick="settings_tog()" id="settings_btn">
+          <svg xmlns="http://www.w3.org/2000/svg"  style="width: 16px;" viewBox="0 0 64 64" enable-background="new 0 0 64 64"><path d="m60.953 39.151l-4.061-2.582c.271-1.482.42-3.008.42-4.568 0-1.56-.148-3.084-.419-4.566l4.06-2.582c.912-.581 1.305-1.915.868-2.964l-1.583-3.821c-.435-1.051-1.656-1.718-2.711-1.483l-4.695 1.044c-1.744-2.523-3.936-4.714-6.459-6.459l1.045-4.696c.234-1.055-.432-2.276-1.482-2.71l-3.822-1.584c-1.051-.438-2.386-.046-2.966.868l-2.582 4.06c-1.482-.271-3.005-.42-4.566-.42-1.561 0-3.086.149-4.567.419l-2.582-4.06c-.581-.914-1.914-1.306-2.965-.87l-3.82 1.584c-1.051.434-1.719 1.656-1.483 2.712l1.044 4.695c-2.524 1.745-4.714 3.935-6.458 6.458l-4.696-1.044c-1.055-.236-2.276.432-2.711 1.481l-1.583 3.821c-.436 1.051-.044 2.386.868 2.966l4.061 2.582c-.27 1.482-.419 3.007-.419 4.567 0 1.561.149 3.085.419 4.566l-4.061 2.582c-.913.581-1.304 1.915-.868 2.967l1.583 3.821c.436 1.049 1.656 1.718 2.711 1.481l4.696-1.045c1.745 2.523 3.935 4.714 6.458 6.459l-1.045 4.696c-.236 1.055.433 2.276 1.482 2.71l3.821 1.584c1.052.434 2.385.044 2.966-.869l2.582-4.06c1.482.271 3.007.419 4.567.419 1.56 0 3.083-.148 4.566-.419l2.582 4.06c.58.913 1.915 1.303 2.965.869l3.82-1.582c1.053-.436 1.719-1.657 1.483-2.712l-1.044-4.696c2.523-1.744 4.715-3.936 6.459-6.459l4.695 1.045c1.055.236 2.276-.433 2.711-1.481l1.583-3.821c.438-1.05.045-2.384-.867-2.963m-35.41 11.432l-2.066-.855c-4.019-1.938-7.271-5.19-9.205-9.209l-.852-2.056c-.705-2.027-1.107-4.195-1.107-6.462 0-2.273.405-4.446 1.113-6.478l.842-2.033c1.935-4.022 5.188-7.277 9.208-9.215l2.068-.857c2.025-.704 4.19-1.105 6.455-1.105 2.26 0 4.423.4 6.445 1.102l2.088.865c4.008 1.934 7.252 5.177 9.187 9.184l.869 2.1c.7 2.02 1.099 4.179 1.099 6.437s-.398 4.418-1.099 6.438l-.869 2.1c-1.935 4.008-5.179 7.25-9.187 9.184l-2.088.865c-2.022.701-4.186 1.102-6.445 1.102-2.264-.002-4.43-.404-6.456-1.107"/><path d="m47 32.001c0-8.284-6.715-15-15-15-8.283 0-15 6.716-15 15 0 8.284 6.717 15 15 15 8.285 0 15-6.716 15-15m-22.5 0c0-4.142 3.358-7.5 7.5-7.5 4.141 0 7.5 3.358 7.5 7.5 0 4.142-3.358 7.5-7.5 7.5-4.141 0-7.5-3.358-7.5-7.5"/></svg>
+      </button>
+      <button type="button" onclick="start()">Start</button>
+      <button type="button" onclick="pause()">Pause</button>
+      <div id="placeholder1" style="width: auto;">
+      </div>
+      <div id="mainrow2" style="width: auto;">
+        <div id="placeholder2" style="width: 100%; padding: 0px;float: left;"><!-- style="width: auto;" -->
+        </div>
+        <table id="marker_table" style="width: 50%;" hidden>
+          <thead>
+            <tr>
+            </tr>
+          </thead>
+          
+          <tbody>
+            <!-- <tr> -->
+              <!-- <td>John Lennon</td> -->
+              <!-- <td>Rhythm Guitar</td> -->
+            <!-- </tr> -->
+            <!-- <tr> -->
+              <!-- <td>John Lennon</td> -->
+              <!-- <td>Rhythm Guitar</td> -->
+            <!-- </tr> -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <!-- <script type="text/javascript"> -->
+    <script type="module">
+
+import { init3d, animate3d, initSpectrogram } from '../js/3d_draw4.js';
+import { surf, updateSurf } from '../js/plt.js';
+import { distinct_colors } from '../js/distinct_colors.js';
+import { plotmarkers } from '../js/plot_tools.js';
+window.plt = {surf:surf,updateSurf:updateSurf};
+
+window.distinct_colors = distinct_colors;
+window.plotmarkers = plotmarkers;
+
+var gltf_file = "./assets/arrow.glb";
+// window.obj3d_name = "Xyz_Cube";
+window.obj3d_name = "arrow";
+window.objSpectrogram_name = "Spectrogram";
+
+var XGAIN = 0.00376390;
+var YGAIN = 0.00376009;
+var ZGAIN = 0.00349265;
+window.nfft = 501;
+window.displayed_spectrogram_idx = 0;//display spectrogram from 1st track by default
+var ntracks = 3;                  //TO DO:generalize code for ntracks
+
+var placeholder1 = $("#placeholder1");
+var placeholder2 = $("#placeholder2");
+
+//https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
+var def1 = [
+  'len','uint8',
+  't', 'uint32le',
+  'cnt', 'uint32le',
+  'x', 'int16le',
+  'y', 'int16le',
+  'z', 'int16le',
+  'info', 'uint16le',
+  'sync','uint8'
+];
+
+var def2 = [
+  'X','float32',
+  'Y','float32',
+  'Z','float32'
+];
+
+var options1 = {
+  series: {
+    shadowSize: 0,	// Drawing is faster without shadows
+    //downsample: { threshold: 2000 }//using Largest-Triangle-Three-Buckets downsampling plugin (best compromize between keeping visual features and performance) https://skemman.is/handle/1946/15343
+  },
+  yaxis: {
+    min: -16,
+    max: 16
+  },
+  xaxis: {
+    //show: false
+  },
+  zoom: {
+    interactive: false
+  },
+  grid: {
+    hoverable: true,
+    clickable: true
+  },
+  // pan: {
+    // interactive: true
+  // }
+  selection: {
+    mode: "xy"
+  }
+};
+
+var options2 = {
+  series: {
+    shadowSize: 0,	// Drawing is faster without shadows
+    //downsample: { threshold: 2000 }//using Largest-Triangle-Three-Buckets downsampling plugin (best compromize between keeping visual features and performance) https://skemman.is/handle/1946/15343
+  },
+  yaxis: {
+    mode: "log",
+    showTickLabels: "all",
+    max: 100,
+    min: 0.00001
+  },
+  xaxis: {
+    //show: false
+    max: 400
+  },
+  zoom: {
+    interactive: false
+  },
+  grid: {
+    hoverable: true,
+    clickable: true
+  },
+  // pan: {
+    // interactive: true
+  // }
+  selection: {
+    mode: "xy"
+  }
+};
+
+var data = [[],[],[]
+    // { data: [], label: "X" },
+    // { data: [], label: "Y"},
+    // { data: [], label: "Z"}
+  ];
+window.data2 = [[],[],[]];
+var spectrums = [];
+window.cbufs = [];
+window.plot1 = $.plot(placeholder1, [data], options1);
+window.plot2 = $.plot(placeholder2, [data2], options2);
+
+var ws1 = new WebSocket("ws://127.0.0.1:5678/");
+var ws2 = new WebSocket("ws://127.0.0.1:5677/");
+var ws3 = new WebSocket("ws://127.0.0.1:5676/");
+
+window.fftwindows = {'hann':"",'boxcar':"",'flattop':"",'barthann':"",'bartlett':"",'blackman':"",'blackmanharris':"",'bohman':"",'chebwin':{at:""},'cosine':"",'dpss':{NW:"", Kmax:"", norm:"", return_ratios:""},'exponential':{center:"", tau:""},'gaussian':{std:""},'general_cosine':{a:""},'general_gaussian':{p:"",sig:""},'general_hamming':{alpha:""},'hamming':"",'kaiser':{beta:""},'nuttall':"",'parzen':"",'slepian':{width:""},'triang':"",'tukey':{alpha:""}};
+
+window.fftaveraging = {"lin":{"n":"nAverage"}, "exp":{"alpha":"nAverage"},"overall":""};//{xx:alias}
+
+window.colbuf = new CBuffer(...distinct_colors);
+
+$(function(){
+  setToolTip(2);
+  $("#record_data").change(onSettingsBool);
+  $("#record_fft").change(onSettingsBool);
+  $("#select_display2, #SpectrogramTrack").change(onSelectDisplay);
+  // setZoomButton(placeholder2,plot2);
+  placeholder2.on("plotclick",onPlotClick);
+});
+var cnt_ws2=0;
+// console.time("onmessage ws2");
+var spectrums = [];
+
+ws2.onmessage = function (event) {
+  if(typeof(settings)==="undefined")return false;//only run if seeetings received from ws3
+  performance.mark("ws2 a");
+  decode(event.data, def2, updateOption);
+  // console.timeLog("onmessage ws2");
+  
+  function updateOption(ds){
+    var j=0;
+    data2 = [[],[],[]];
+    // var x=[], y=[];
+    var f=[], X=[],Y=[],Z=[];
+    while (!ds.isEof()) {
+      var obj = ds.readStruct(def2);
+      X.push(obj.X*XGAIN);
+      Y.push(obj.Y*YGAIN);
+      Z.push(obj.Z*ZGAIN);
+      f.push(j*settings.fft.df);
+      // data2.push([[j*df,obj["X"]*XGAIN],[j*df,obj["Y"]*YGAIN],[j*df,obj["Z"]*ZGAIN]]);
+      // y.push(obj.x*XGAIN);
+      // x.push(j*df);
+      j++;
+    }
+    var tmpdata = [[f,X],[f,Y],[f,Z]].map(transpose);   //arrange plot data [track1:[band1:[x:freq, y:data],band2...,track2...
+    spectrums = [X,Y,Z];
+    cnt_ws2++;
+    // tmpdata = transpose([[t,X],[t,Y],[t,Z]]);
+    setcbufs();
+    for (let i = 0; i < tmpdata.length; i++){
+      Array.prototype.push.apply(data2[i], tmpdata[i]);  //add new spectrum track to plot data
+      let sp = spectrums[i];
+      //console.log(cnt_ws2,i,sp);
+      if(cbufs.length)cbufs[i].push(sp);                      //add new spectrum to ring buffer (per track array)
+    } 
+    // data2 = data2.concat(data2);
+    // for (i = 0; i < data2.length; i++){
+      // Array.prototype.push.apply(data2[i], data2[i])
+    // }
+    
+    if(plot2.getOptions()!==null){
+      plot2.setData(data2);
+      plot2.draw();
+    }
+    
+    if(cbufs.length)updateSpectrogram();
+    // console.log(spectrums[1][0]);
+    placeholder2.trigger("newfft",{fftId:cnt_ws2, fft:spectrums});
+    performance.mark("ws2 b");
+    performance.measure("measure ws2","ws2 a", "ws2 b");
+  }
+};
+
+ws1.i=0;
+
+performance.mark("a");
+// console.time("onmessage start");
+// console.time("onmessage end");
+
+ws1.data_ = [];
+
+var streamt = 0;
+var streamcnt = 0;
+var startTime = new Date().getTime();
+var cnt0=0;
+ws1.onmessage = function (event) {
+  if(typeof(settings)==="undefined")return false;//only run if seeetings received from ws3
+  // console.timeLog("onmessage start");
+  streamcnt++;
+  decode(event.data, def1, updateOption);
+  
+  function updateOption(ds){
+    // performance.mark("b");
+    // performance.measure("measure a to b","a", "b")
+    
+    var j=0;
+    var tmpdata = [];
+    var t=[], X=[],Y=[],Z=[];
+    while (!ds.isEof()) {
+      var obj = ds.readStruct(def1);
+      
+      X.push(obj.x*XGAIN);
+      Y.push(obj.y*YGAIN);
+      Z.push(obj.z*ZGAIN);
+      // if(cnt0==0)cnt0 = obj.cnt;
+      // t.push(obj.cnt-cnt0);
+      t.push(j+ws1.i);
+      j++;
+    }
+    // console.log("range X", t[0], t[t.length-1]);
+    // console.log("range Y", X[0], X[X.length-1]);
+    tmpdata = [[t,X],[t,Y],[t,Z]].map(transpose);
+    // tmpdata = transpose([[t,X],[t,Y],[t,Z]]);
+    for (let i = 0; i < tmpdata.length; i++){
+      Array.prototype.push.apply(data[i], tmpdata[i]);
+    }
+    // data = data.concat(tmpdata);
+    // data = data.concat(tmpdata);
+    
+    if (data[0].length > 32000){
+        ws1.data_ = getData.get(data[0].length-32000, data[0].length-1);
+        plot1.setData(ws1.data_);
+        plot1.getOptions().xaxes[0].min = ws1.data_[0][0][0];//[1st track][1st point][t]
+        // plot1.getOptions().series.downsample.threshold = 2500;//downsample
+    }else{
+        plot1.setData(data);
+    }
+    plot1.getOptions().xaxes[0].max = data[0][data[0].length-1][0];//[1st track][last point][t]
+    plot1.setupGrid();
+    plot1.draw();
+    
+    ws1.i=ws1.i+j;
+    
+    // update3d(X[X.length-1],Y[Y.length-1],Z[Z.length-1]);
+    update3d(X,Y,Z);
+    // console.timeLog("onmessage end");
+  }
+  // endTime = new Date().getTime();
+  // streamt = endTime-startTime;
+  // console.log("refresh time (ms): ",(streamt/streamcnt));
+};
+
+ws2.onclose = function(event){
+  if(plot2.getOptions()!==null){
+      zoomSelect(placeholder2,plot2,'x',data2);
+  }
+};
+
+ws2.onopen = function(event){
+  if(plot2.getOptions()!==null){
+      placeholder2.off("plotselected");
+  }
+};
+ws1.onopen = function(event){
+  if(plot1.getOptions()!==null){
+      placeholder1.off("plotselected");
+      plot1.getOptions().series.downsample.threshold = 2500;
+  }
+};
+
+ws1.onclose = function(event){
+        //add some interactivity
+      zoomSelect(placeholder1,plot1,"xy",data);
+      // setZoomButton(placeholder1,plot1);
+      setToolTip(1);
+};
+
+function zoomSelect(placeholder,plot,axis,data_){
+      placeholder.off("plotselected").bind("plotselected", function (event, ranges) {
+          if(axis.indexOf("x") > -1){
+            $.each(plot.getXAxes(), function(_, axis) {
+              var opts = axis.options;
+              opts.min = ranges.xaxis.from;
+              opts.max = ranges.xaxis.to;
+            });
+          }
+          
+          if(axis.indexOf("y") > -1){
+            $.each(plot.getYAxes(), function(_, axis) {
+              var opts = axis.options;
+              opts.min = ranges.yaxis.from;
+              opts.max = ranges.yaxis.to;
+            });
+          }
+          
+          // plot.getData()[0].points.show = true;//TODO: only show at strong zoom; adjust downsample threshold with zoom
+          plot.getOptions().series.downsample.threshold = 10000000;
+          plot.setData(data_);
+          
+          plot.setupGrid();
+          plot.draw();
+          plot.clearSelection();
+      });
+}
+
+function setToolTip(i){
+  	$("<div id='tooltip"+i+"'></div>").css({
+			position: "absolute",
+			display: "none",
+			border: "1px solid #fdd",
+			padding: "2px",
+			"background-color": "#fee",
+			opacity: 0.80
+		}).appendTo("body");
+
+		$("#placeholder"+i).bind("plothover", function (event, pos, item) {
+
+			if ($("#enablePosition:checked").length > 0) {
+				var str = "(" + pos.x.toFixed(2) + ", " + pos.y.toFixed(2) + ")";
+				$("#hoverdata"+i).text(str);
+			}
+
+			if (1) {
+				if (item) {
+					var x = item.datapoint[0].toFixed(2),
+						y = item.datapoint[1].toFixed(2);
+
+					$("#tooltip"+i).html("x: " + x + " y: " + y)
+						.css({top: item.pageY+5, left: item.pageX+5})
+						.fadeIn(200);
+				} else {
+					$("#tooltip"+i).hide();
+				}
+			}
+		});
+
+		$("#placeholder"+i).bind("plothovercleanup", function (event, pos, item) {
+				$("#tooltip"+i).hide();
+		});
+}
+
+//actions
+//pause data flow
+window.pause = function pause(){
+  ws3.send(JSON.stringify({action: 'pause'}));
+  ws1.onclose();
+  ws2.onclose();
+  // ws1.close();
+  // ws2.close();
+};
+//start data flow
+window.start = function start(){
+  ws3.send(JSON.stringify({action: 'start'}));
+};
+//send booleansettings
+function onSettingsBool(e){
+  console.log("Settings bool - "+this.id+":"+this.checked);
+  ws3.send(JSON.stringify({action: 'settingsBool', n:this.id, v:this.checked}));
+}
+
+//send object settings
+function onSettingsObj(e){
+  console.log("Settings obj");
+  //ws3.send(JSON.stringify({action: 'settingsBool', n:this.id, v:this.checked}));
+}
+
+//form to json
+$('#fft_settings').submit(function (e) {
+    e.preventDefault();
+    var data = $(this).formtoJSON();
+    
+    data["fft-overlap"] = data["fft-overlap_pct"]/100;//FFT overlap % to decimal
+    console.log(data);
+    
+    ws3.send(JSON.stringify({action: 'settingsFFT', FFTsettings:data}));
+    // Object
+        // email: "value"
+        // name: "value"
+        // password: "value"
+});
+
+//choose display
+function onSelectDisplay(e){
+  console.log("Settings select - "+this.id+":"+this.value);
+  $(placeholder2).trigger("hide_marker_table");
+  var this_=this;
+  setTimeout(function(){//prevents bug with jquery.canvaswrapper.js when switching from spectrum+markers to spectrogram while started
+    
+    $("#SpectrogramOpt").hide();
+    if(this_.id == "select_display2"){
+      if($(".flot-overlay",placeholder2).length)$('#placeholder2 [class^="flot"]').hide();//plot2.destroy();
+      $("#graph3d, #Spectrogram").remove();
+      if(typeof(scene)!="undefined")scene = null;
+      if(typeof(obj3d)!="undefined")obj3d = undefined;
+      switch(this_.value){
+        case 'Spectrum':
+          $('#placeholder2 [class^="flot"]').show();
+          // plot2 = $.plot(placeholder2, [data2], options2);
+          // plot2.setData(data2);
+          // plot2.draw();
+          break;
+        case 'Spectrogram':
+          $(placeholder2).append('<div id="Spectrogram"/>');
+          $("#SpectrogramOpt").show();
+          plotSpectrogram();
+          break;
+        case '3D':
+          $(placeholder2).trigger("hide_marker_table");
+          plot3d();
+          break;
+      }
+    }
+    //plot2 = $.plot(placeholder2, [data2], options2);
+    //plot2.destroy();
+    if(this_.id == "SpectrogramTrack"){
+      $("#SpectrogramOpt").show();
+      displayed_spectrogram_idx = this_.value;
+      window.spz = transpose(cbufs[displayed_spectrogram_idx].slice());
+      $("[name='SpectrogramOption']:checked").click();//trigger spectrogram plot
+      //plotSpectrogram();
+    }
+  },100);
+}
+
+var axis;
+function update3d(X,Y,Z){
+  if($("#graph3d").length){
+    if(typeof(scene)!="undefined"){
+      if(typeof(window.obj3d)=="undefined"){
+        window.obj3d = scene.getChildByName(obj3d_name);
+        axis = new THREE.Vector3(0, 1, 0);
+        scene.background = new THREE.Color( 0xffffff  );
+        if(typeof(scene.getObjectByName("Light"))!="undefined")scene.getObjectByName("Light").visible=false;
+        var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+        scene.add( directionalLight );
+      }
+      if(typeof(window.obj3d)!="undefined"){
+        let x = Math.avg(X);
+        let y = Math.avg(Y);
+        let z = Math.avg(Z);
+        var vector = new THREE.Vector3(x, y, z);
+        window.obj3d.quaternion.setFromUnitVectors(axis, vector.clone().normalize());
+        // console.log(x,y,z);
+        // obj3d.lookAt(x,y,z);
+        
+      }
+    }
+  }
+}
+
+window.onSpectrogramOption = function onSpectrogramOption(opt){
+  console.log("onSpectrogramOption",opt);
+  $("#Spectrogram").children().remove();
+  if(opt.value=="2d")plotSpectrogram();
+  if(opt.value=="2d_detailed")plotSpectrogram_("heatmap");  
+  if(opt.value=="3d")plotSpectrogram_("surface");
+}
+
+function setSpectrogramXYaxis(){
+  let start = (cnt_ws2 - nfft)*settings.fft.t_step;
+  if(typeof(window.spx)==="undefined")window.spx = math.range(start, nfft*settings.fft.t_step+start, settings.fft.t_step).toArray();//start, end, step
+  if(typeof(window.spy)==="undefined")window.spy = math.range(0, settings.fs/2, settings.fft.df).toArray();
+}
+
+//3d
+//plotly is too slow. not for real time
+function plotSpectrogram_(type){
+  if(!$("#Spectrogram3dOpt:checked, #Spectrogram2dDetOpt:checked").length || !$("#Spectrogram").length)return;
+  setSpectrogramXYaxis();
+  if(typeof(window.spz)==="undefined")window.spz = nj.zeros([Math.floor(settings.fft.nlines/2),nfft]).tolist();
+  plt.surf("Spectrogram",spx,spy,spz,type).then(function(e){
+    // console.log(e);
+    updateSpectrogram_();
+  });
+/*   var r = initSpectrogram($(placeholder2).get(0),{x:nfft,y:Math.floor(settings.fft.nlines/2)});
+  animate3d();
+  console.log(r);
+  window.THREE = r.THREE;
+  window.scene = r.scene;
+  window.controls = r.controls; */
+}
+
+var old_cnt_ws2;
+window.updateSpectrogram_ = function updateSpectrogram(){
+  if(!$("#Spectrogram3dOpt:checked, #Spectrogram2dDetOpt:checked").length || !$("#Spectrogram").length)return;
+  // console.log("updateSpectrogram",cnt_ws2,old_cnt_ws2);
+  if(cnt_ws2==old_cnt_ws2){
+    setTimeout(updateSpectrogram,10);
+    return false;//update if new data
+  }else{
+    setSpectrogramXYaxis();
+    let start = (cnt_ws2 - nfft)*settings.fft.t_step;
+    window.spx = math.range(start, nfft*settings.fft.t_step+start, settings.fft.t_step).toArray();
+    window.spz = transpose(cbufs[displayed_spectrogram_idx].slice());
+    if(typeof(plt.updateSurf)==="function")plt.updateSurf("Spectrogram",spx,spy,spz).then(function(e){
+      // console.log(e);
+      updateSpectrogram_();
+    });
+    old_cnt_ws2 = cnt_ws2;
+  }
+};
+
+//2d
+function plotSpectrogram(){
+  if(!$("#Spectrogram2dOpt")[0].checked || !$("#Spectrogram").length)return;
+  setSpectrogramXYaxis();
+  if(typeof(window.spz)==="undefined")window.spz = nj.zeros([Math.floor(settings.fft.nlines/2),nfft]).tolist();
+  
+  if(!document.getElementById("SpectrogramCanvas")){
+    var container = document.createElement( 'div' );
+    container.setAttribute("id", "SpectrogramCanvas");
+    $("#Spectrogram")[0].appendChild( container );
+
+    window.Spectrogramcanvas = container.appendChild(document.createElement('canvas'));
+  }
+  
+  window.ctx = Spectrogramcanvas.getContext('2d');
+  ctx.canvas.width  = spx.length;
+  ctx.canvas.height = spy.length;
+  updateSpectrogram();
+}
+
+window.updateSpectrogram = function updateSpectrogram(){
+  if(!$("#Spectrogram2dOpt")[0].checked || !$("#Spectrogram").length || !cbufs.length)return;
+  window.d = cbufs[displayed_spectrogram_idx].slice();
+  if($("#Spectrogram").length){
+        window.spz = transpose(cbufs[displayed_spectrogram_idx].slice());
+       var col = colorize(ndarray(spz.slice().reverse().flat(),[spz.length,spz[0].length]).transpose(),{colormap:"jet",rgba:true,alpha:255}).data;
+        
+        var imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+        imageData.data.set(col);
+        
+        ctx.putImageData(imageData, 0, 0);
+  }
+};
+
+$(function(){
+  $(document ).on("mouseenter", "#SpectrogramCanvas canvas", function(e) {
+    if(!$('#ttip').length)$("#SpectrogramCanvas").append('<div id="ttip">');
+    $('#ttip').show();
+  }).on("mouseleave", "#SpectrogramCanvas canvas", function(e) {
+    $('#ttip').hide();
+  });
+  
+  setSpectrogramTooltip();
+  
+  $(document ).on("resize", "#SpectrogramCanvas", function(){
+    $(document ).off("mousemove");
+    setSpectrogramTooltip();
+  });
+  
+  function setSpectrogramTooltip(){
+    $(document ).on("mousemove", "#SpectrogramCanvas canvas", function(e) {
+      var mouseX, mouseY;
+        
+      var scaleX = ctx.canvas.width / ctx.canvas.offsetWidth;   // relationship bitmap vs. element for X
+      var scaleY = ctx.canvas.height / ctx.canvas.offsetHeight;  // relationship bitmap vs. element for Y
+
+      if(e.offsetX) {
+        mouseX = e.offsetX* scaleX;
+        mouseY = (e.offsetY* scaleY+1);
+      }
+      else if(e.layerX) {
+        mouseX = e.layerX* scaleX;
+        mouseY = e.layerY* scaleY+1;
+      }
+      // var c = ctx.getImageData(mouseX, mouseY, 1, 1).data;
+      //console.log("ctx.canvas.height-mouseY",ctx.canvas.height-mouseY);
+      if(ctx.canvas.height-mouseY != NaN){
+        $('#ttip').css({'left':mouseX+20, 'top':mouseY*settings.fft.df+20}).html("f:"+(Math.round((ctx.canvas.height-mouseY))*settings.fft.df).toPrecision(4)+" Hz  \n a:"+spz[Math.round(ctx.canvas.height - mouseY)][Math.round(mouseX)].toPrecision(4)+" g");
+      }
+      // console.log(mouseX, mouseY);
+    });
+  }
+});
+
+/* function findPos(obj) {
+    var curleft = 0, curtop = 0;
+    if (obj.offsetParent) {
+        do {
+            curleft += obj.offsetLeft;
+            curtop += obj.offsetTop;
+        } while (obj = obj.offsetParent);
+        return { x: curleft, y: curtop };
+    }
+    return undefined;
+} */
+
+function plot3d(){
+  
+  var r = init3d($(placeholder2).get(0), gltf_file);
+  animate3d();
+  console.log(r);
+  window.THREE = r.THREE;
+  window.scene = r.scene;
+}
+
+//spectrum marker
+window.spSelected = [];//spectrum selections
+function onPlotClick(event, pos, item){
+  if(!$("#clickdata").length) placeholder2.parent().append('<div id="clickdata"\>');
+  
+  if (item) {
+    $("#clickdata").text("Track: " + item.seriesIndex + " f:" + item.series.data[item.dataIndex][0].toPrecision(6)+"Hz a:" + item.series.data[item.dataIndex][1].toPrecision(6)+"g");
+    console.log("onPlotClick", item);
+    plot2.highlight(item.series, item.datapoint);
+    
+    if(!$("#FFTmarkerSwitch")[0].checked)return false;
+    spSelected.push({
+      item:                 item,
+      name:               settings.tracks[item.seriesIndex]+" "+(item.dataIndex * settings.fft.df),
+      f:                      item.dataIndex * settings.fft.df,
+      nearest:            item.dataIndex * settings.fft.df,
+      trackIdx:           item.seriesIndex,
+      trackName:        settings.tracks[item.seriesIndex],
+      selectedY:          item.series.data[item.dataIndex][1],
+      currentY:           item.series.data[item.dataIndex][1],
+      overallY:            0,
+      min:                  Infinity,
+      max:                 0,
+      _Sum:               0,
+      _SumSq:           0,
+      n:                     0,
+      Var:                  0,
+      std:                   0,
+      peakFit:            true,
+      type:                "point", //point, powerband, max
+      
+      //for powerband and max
+      fmin:                 0,
+      fmax:                 settings.fs/2,
+      unit:                   settings.units[item.seriesIndex],
+      //buffer:              false,//ring buffer
+    });
+    $(placeholder2).trigger("update_fft_markers").trigger("update_table",{fftId:cnt_ws2, fft:spectrums});
+  }
+}
+
+//compute spectral RMS. Detail in spectralc2.py 
+window.spectralRMS = function spectralRMS(fft_lines){
+  const ecf = settings.fft.ECF;
+  return Math.pow(nj.sum(nj.multiply(nj.power(nj.multiply(nj.array(fft_lines),ecf),2),0.5)),0.5);
+};
+
+window.peak_fit_corr = function peak_fit_corr(Y,f,bin){
+  //ops: operations on ndarray, Math on scalar
+  Y = ndarray(Y);
+  f = ndarray(f);
+  var ac = Math.abs(Y.get(bin));
+  var fc = f.get(bin);
+  var df = f.get(1)-f.get(0);
+  
+  var v = ndarray([Math.abs(Y.get(bin-1)), Math.abs(Y.get(bin+1))]);
+  var magn_lat = ops.sup(v);       //max
+  var band = ops.argmax(v);//index max
+
+  var dlin = ac / magn_lat ;
+  var dfc = (2 - dlin) / (1 + dlin) * df ;
+  var dsd = dfc / df;
+  var dl  = Math.sin (Math.PI * dsd) / (Math.PI * dsd) / (1 - dsd * dsd);
+
+  var r={};
+  
+  if(band == 1){
+    r.fcorr = fc - dfc;
+  }else{
+    r.fcorr = fc + dfc;
+  }
+  r.acorr = ac / dl;
+  return r;
+};
+
+window.marker_table_alias = {
+      // item:                 item,
+      name:               {name:"Name"},
+      f:                      {name:"f (Hz)", precision:4},//with peakfit if active
+      nearest:            {name:"f_{FFT band} (Hz)", precision:4},//nearest fft band freq
+      //trackIdx:          
+      trackName:       {name:"Track"},
+      selectedY:         {name:"Y_{at selection}", precision:4},
+      currentY:           {name:"Y", precision:4},
+      overallY:           {name:"Y_{overall}", precision:4},
+      min:                  {name:"Y_{min}", precision:4},
+      max:                 {name:"Y_{max}", precision:4},
+      n:                     {name:"n_{FFT}"},
+      Var:                  {name:"var", precision:4},
+      std:                   {name:"std", precision:4},
+      peakFit:            {name:"Peak Corr"},
+      type:                {name:"Type"},
+      fmin:                {name:"f_{min}", precision:4},
+      fmax:               {name:"f_{max}", precision:4},
+      unit:                 {name:"Unit"},
+    };
+
+marker_table_alias.getName = function(n){
+  var r = [];
+  for(let i in n){
+    r.push(marker_table_alias[n[i]].name);
+    //console.log(marker_table_alias[n[i]].name);
+  }
+  
+  //Replace 
+  var re_sub = /_{(.*)}/;
+  var re_sup = /\^{(.*)}/;
+  r = r.map(function(e){
+    return e.replace(re_sub,"<span class='sub'>$1</span>").replace(re_sup,"<span class='sup'>$1</span>");
+  })
+  return r;
+};
+
+/* marker_table_alias.getValues = function(n, o){
+  var v = new Array(o.length);
+  v.map(function(e,i,a){
+    let r = [];
+    console.log(e,i,a);
+    for(let p in n){
+      console.log(p, o[p]);
+      if(typeof(o[p])=="string")r.push(o[p]);
+      if(typeof(o[p])=="number")r.push(o[p].precision(this[p].precision));
+    }
+    return r;
+  });
+  return v;
+}; */
+
+marker_table_alias.getValues = function(n, o){//["marker keys"], spSelected
+  var v = new Array(o.length);
+  for(let j=0; j<v.length;j++){
+    let r = [];
+    for(let p in n){
+      if(typeof(o[j][n[p]])=="string")r.push(o[j][n[p]]);
+      if(typeof(o[j][n[p]])=="number")r.push(o[j][n[p]].toPrecision(this[n[p]].precision));
+    }
+    v[j] = r;
+  };
+  return v;
+};
+
+window.no_cell = true;
+window.trows = [];
+
+$(function(){
+  var displayed = ["trackName", "f","unit", "currentY", "overallY", "max","type","fmin","fmax"];
+  var t = marker_table_alias.getName(displayed);
+  
+  $("#FFTmarkerTableSwitch").change(function() {
+    if(this.checked) {
+      $(placeholder2).width("50%");
+       $("#marker_table").show().width("50%");
+      //add table
+      if(!$("#marker_table th").length){
+        for(let i = 0; i < t.length; i++){
+          $("#marker_table thead tr").append("<th>"+t[i]+"</th>");
+        }
+      }
+      trows = $("#marker_table tbody");
+    }else{//not checked
+      $(placeholder2).width("100%");
+      $("#marker_table").width("0%").hide();
+    }
+  });
+  
+  var old_table_length = 0;
+  window.editing_markers_table = false;
+  
+  $(placeholder2).on("newfft selectfft update_table",function(evt, fft){
+    if(!$("#FFTmarkerTableSwitch")[0].checked || editing_markers_table)return false;//only update if table displayed
+    updateFFTstat(fft);
+    // console.table(spSelected,["item","f","nearest","trackIdx","trackName","selectedY","currentY","overallY","min","max","n","Var","std","peakFit","type","fmin","fmax","buffer"]);
+    
+    function updateFFTstat(data){
+      spSelected.map(function(e, i, a){
+        let fft = data.fft;
+        let item = e.item;
+        let d = 0;
+        if(e.peakFit){
+          let r = peakFit(item, fft[e.trackIdx]);
+          d = r.acorr;
+          e.f = r.fcorr;
+        }else{
+          d = fft[e.trackIdx][item.dataIndex];
+        }
+        e.currentY = d;
+        e.min = d<e.min?d:e.min;
+        e.max = d>e.max?d:e.max;
+        e.n++;
+        e._Sum = e._Sum+d;
+        e._SumSq = e._SumSq + d*d;
+        e.overallY = e._Sum/e.n;
+        e.Var = (e._SumSq-(e._Sum*e._Sum)/e.n)/(e.n);
+        e.std = Math.sqrt(e.Var);
+        return e;
+      });
+      
+      
+    }
+       
+    //add rows
+    if(!$("#marker_table tbody tr").length || $("#marker_table tbody tr").length != old_table_length){
+      $("#marker_table tbody tr").remove();
+      no_cell = true;
+      for(let i = 0; i < spSelected.length; i++){
+        //$("#marker_table thead tr").append("<th>"+t[i]+"</th>");
+        $("#marker_table tbody").append("<tr></tr>");
+      }
+    }
+    
+    //fill rows
+    var tab_val = marker_table_alias.getValues(displayed, spSelected);
+    //var no_cell = !$(trows).find('td').length;
+    tab_val.map(function(e,i,a){//rows
+      e.map(function(e_,i_,a_){//cells
+        // console.log("<td>"+e_+"</td>");
+        if(no_cell){
+          $(trows.find('tr')[i]).append("<td class=table_cell_"+displayed[i_]+"></td>");
+        }
+        $(trows.find('tr')[i]).find('td').eq(i_).html(e_);
+        //$(trows[i]).find('td')
+      });
+      $(trows.find('tr')[i]).find('td').eq(0).css("border-left-color", colbuf.get(i));
+    });
+    no_cell = false;
+    
+    $(placeholder2).trigger("update_fft_markers");
+  });  
+  
+  $(placeholder2).on("hide_marker_table",hide_marker_table);
+  
+  function hide_marker_table(){
+    $("#FFTmarkerTableSwitch, #FFTmarkerTableEdit, #FFTmarkerSwitch").prop("checked", false).change();
+  }
+  
+  
+  function peakFit(item, fft){
+    var d = transpose(item.series.data);
+    var f = d[0];
+    var Y;
+    if(typeof(fft)=="undefined"){
+      Y = d[1];
+    }else{
+      Y = fft;
+    }
+    var bin = item.dataIndex;//item.series.data[item.dataIndex][0];
+    var r = peak_fit_corr(Y,f,bin);
+    // console.log("peakfit",r.acorr,r.fcorr);
+    return r;
+  }
+  
+  $(placeholder2).on("update_fft_markers",function(){
+    var c = $("#placeholder2 .flot-base")[0];
+    var r = [];
+    for(let i=0; i<spSelected.length; i++) {
+      let pt = plot2.pointOffset({x:spSelected[i].f,y:spSelected[i].currentY});
+      r.push({left:pt.left, top:pt.top, color:colbuf.get(i), radius:2});//get color, loops over if length > #colors
+    }
+    plotmarkers(c,r);
+  });
+  
+  $(placeholder2).resize(function () {
+    $(placeholder2).trigger("update_fft_markers");
+  });
+  
+  //edit markers
+    $("#FFTmarkerTableEdit").change(function() {
+      editing_markers_table = this.checked;
+      var selectionPivot;
+      if(editing_markers_table) {
+        $("#FFTmarkerTableEditOpt").show()
+        $("#FFTmarkerTableEditOpt button").off('click').click(function(){
+          console.log("Delete marker");
+          $("#marker_table tbody tr").each(function(i,e){
+            console.log(i,e,$(e).hasClass('selected'));
+            if($(e).hasClass('selected')){
+              spSelected.splice(i,1);
+              $(e).remove();
+            }
+          });
+        });
+        $('#marker_table tbody').off('mousedown').on('mousedown', 'tr', function(e) { //data rows
+          if(event.which != 1) {//not left mouse button
+              return;
+          }
+          if (!event.ctrlKey && !event.shiftKey) {
+              clearAll();
+              toggleRow(this);
+              selectionPivot = this;
+              return;
+          }
+          if (event.ctrlKey) {
+              toggleRow(this);
+              selectionPivot = this;
+          }
+          if (event.shiftKey) {
+              clearAll();
+              selectRowsBetweenIndexes(selectionPivot.rowIndex, this.rowIndex);
+          }
+          
+          function toggleRow(row) {
+              if(!$(row).hasClass('selected')){
+                $(row).addClass('selected');
+              }else{
+                $(row).removeClass('selected');
+              }
+              // row.className = row.hasClass == 'selected' ? '' : 'selected';
+          }
+          
+          function selectRowsBetweenIndexes(ia, ib) {
+              var bot = Math.min(ia, ib);
+              var top = Math.max(ia, ib);
+              $('#marker_table tr').slice(bot,top+1).addClass('selected');
+              // for (var i = bot; i <= top; i++) {
+                  // trs[i-1].className = 'selected';
+              // }
+          }
+        });
+        // $('#marker_table tbody').on('click', 'tr', function(e) { //data rows
+          // console.log("marker_table - selected data row",this,e);
+          // $(this).css('background-color',"rgba(79, 91, 193, 0.5)");
+          // var selected_row = this.rowIndex-1;
+        // });
+        // $('#marker_table').on('click', 'thead', function(e) { //data rows
+          // console.log("marker_table - selected data row",e.target.cellIndex);
+          // $(this).find('th').eq(e.target.cellIndex).css('background-color',"rgba(79, 91, 193, 0.5)");
+          // var selected_row = this.rowIndex-1;
+        // });
+      }else{
+        $('#marker_table tbody').off('click');
+        $("#FFTmarkerTableEditOpt").hide();
+        clearAll();
+      }
+      
+      function clearAll(){
+        $('#marker_table').find('tr,th').removeClass('selected');
+      }
+    });
+  
+  $(placeholder2).on("mouseup dblclick",update_fft_markers);
+  function update_fft_markers(e){
+    console.log("placeholder2 zoom",e);
+    setTimeout(function(){
+      $(placeholder2).trigger("update_fft_markers");
+    },200);
+  }
+});
+
+function setcbufs(){
+  if(!cbufs.length){
+    for(let i=1;i<=ntracks;i++){
+      let buf = new CBuffer(nfft);
+      buf.fill(nj.zeros([Math.floor(settings.fft.nlines/2)]).tolist());
+      window.cbufs.push(buf);
+    }
+  }
+}
+
+//get settings
+var old_nlines = 0;
+ws3.onmessage = function (event) {
+  window.settings = JSON.parse(event.data);
+  console.log("settings: "+event.data);
+  
+  //reset spectrogram
+  if(settings.fft.nlines != old_nlines){
+    console.log("nlines changed", settings.fft.nlines, old_nlines);
+    window.cbufs = [];
+    if(typeof(spx)!="undefined")spx = undefined;
+    if(typeof(spy)!="undefined")spy = undefined;
+    if(typeof(spz)!="undefined")spz = undefined;
+    //onSpectrogramOption($("[name='SpectrogramOption']:checked").val());
+    $("[name='SpectrogramOption']:checked").click();
+    $(document ).trigger("resize");
+  }
+  
+  setcbufs();
+  
+  old_nlines = settings.fft.nlines;
+  
+  
+  //assign passed settings to html
+  setSettings(settings,"");
+  
+  function setSettings(settings_,key){
+    for(let k in settings_){
+      // console.log(k, settings_[k]);
+      if (settings_.hasOwnProperty(k)) {//filter out prototype methods
+        if(typeof(settings_[k])=="object"){
+            setSettings(settings_[k],k);
+          }else{
+          var e = document.getElementsByName(key+(key!==""?'-':"")+k)[0];
+          e = typeof(e)=="undefined"?null:e;
+          // console.log(key+k,e,e!==null?e.type:null);
+          if(e!==null && e.type == "checkbox"){
+            e.checked = settings_[k];
+          }else if(e!==null && ["text","hidden","select-one"].includes(e.type)){
+            e.value = settings_[k];
+          }else if(e===null){//isn't element-> is data
+   //         setSettings(settings_[k],k);
+          }
+        }
+      }
+    }
+  }
+  $("#fft-win,#fft-averaging").trigger('change');//trigger selection to initialize extra inputs if required
+  setSettings(settings,"");//rerun to set second level options
+};
+
+//toggle settings bar
+window.settings_tog = function settings_tog(){
+  var v = document.getElementById("sidebar").style.width!="250px"?"250px":"0px";
+  document.getElementById("sidebar").style.width = v;
+  document.getElementById("main").style.marginLeft = v;
+}
+
+//initialize settings
+$(function(){
+/*   var win = [];
+  for(let w in fftwindows){
+    if(fftwindows.hasOwnProperty(w)){
+       //console.log(e);
+       win.push({value:w,label:w});
+    }
+  }
+  $("#fftwindow").JSONtoSelect(win); */
+  setSelect("#fft-win",fftwindows,onFftWindowsChange);
+  setSelect("#fft-averaging",fftaveraging,onFftAveragingChange);
+  
+  //set select options from object
+  function setSelect(id,o,cb){
+    console.log("setSelect",id,o);
+    var a = [];
+    for(let w in o){
+      if(o.hasOwnProperty(w)){
+         //console.log(e);
+        a.push({value:w,label:w});
+        // if(typeof(o[w])=="object"){
+          // setSelect(id+w,o[w],r);
+        // }
+      }
+    }
+    $(id).JSONtoSelect(a);
+    $(id).change(function(e){
+      console.log("select",e);
+      cb(e);
+    });
+    
+    $("#fft-win,#fft-averaging").trigger('change');//trigger selection to initialize extra inputs if required
+  }
+  
+  $("#fft-df").change(function(e){
+    var nl = Math.round(settings.fs/$(e.target).val());
+    console.log("fft-df change",nl);
+    $("#fft-nlines").val(nl);
+  });
+  
+  function onFftWindowsChange(e){
+    $("#fft-windowopt").find("input").parent().remove();
+    setInput("#fft-windowopt",fftwindows,e.target.value,"fft-window-");
+  }
+  
+  function onFftAveragingChange(e){
+    $("#fft-averagingopt").find("input").parent().remove();
+    setInput("#fft-averagingopt",fftaveraging,e.target.value,"fft-");
+  }
+  
+  function setInput(id,o,v,prefix){
+    if(typeof(o[v])=="object"){//has param to set
+      var a = [];
+      for(let w in o[v]){
+        if(o[v].hasOwnProperty(w)){
+           //console.log(e);
+          a.push({id:prefix+w,label:w,name:o[v][w]!==""?prefix+o[v][w]:prefix+w});//name: fft-parameter if no alias
+          // if(typeof(o[w])=="object"){
+            // setSelect(id+w,o[w],r);
+          // }
+        }
+      }
+      $(id).JSONtoInput(a,'text',"rgtSettingsInput",'<div class="settingsline"/>');
+    }
+  }
+});
+
+//convert binary data to datastream
+function decode(dataB, def, cb){
+  new Response(dataB).arrayBuffer().then(runOnDs);//event.data is blob
+    function runOnDs(a){
+      var f = new Uint8Array(a);  
+      cb(new DataStream(f.buffer));
+    }
+}
+
+/*convert Int16Array to Float32Array*/
+/* var Int16toFloat32 = function(raw) {
+    var data   = new Int16Array(raw);
+    var output = new Float32Array(data.length);
+    for (var i = 0; i < data.length; i++) {
+        var int   = data[i];
+        var float = (int >= 0x8000) ? -(0x10000 - int) / 0x8000 : int / 0x7FFF;
+        output[i] = float;
+    }
+    return output;
+}; */
+
+var getData = {
+  get:function(a , b){
+     //console.count("getData");
+    for (let i = 0; i < data.length; i++){
+      this.d[i] = data[i].filter(e=>{return (e[0]>=a && e[0]<=b)});
+    }
+    return this.d;
+  },
+  d:[]
+};
+
+function makeArray(w, h, val) {
+  var arr = [];
+  for(let i = 0; i < h; i++) {
+    arr[i] = [];
+    for(let j = 0; j < w; j++) {
+      arr[i][j] = val;
+    }
+  }
+  return arr;
+}
+
+//Extract "len" long data from array every "nth" element, starting at index "startIdx"
+//const periodicExtract = (arr, nth, len, startIdx) => arr.slice(startIdx,arr.length).filter((e,i) => ((i) % nth < len));
+function periodicExtract(arr, nth, len, startIdx){
+  return arr.slice(startIdx,arr.length).filter((e,i) => ((i) % nth < len));
+}
+
+Math.avg = arr => arr.reduce((a,b) => a + b, 0) / arr.length;
+
+Math.diff = function(a){
+  r= [...a];//copy without reference
+  let i = 0;
+  while(i<a.length){
+    r[i] = a[i+1]-a[i];
+    i++;
+  }
+  r.pop();
+  return r;
+};
+
+Math.rms = function(a){
+  let Squares = a.map((val) => (val*val));
+  let Sum = Squares.reduce((acum, val) => (acum + val));
+  Mean = Sum/a.length; 
+  return Math.sqrt(Mean);
+};
+
+window.transpose = function transpose(array){return array[0].map((col, i) => array.map(row => row[i]));};
+    </script>
+</body>
+</html>

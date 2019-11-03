@@ -44,7 +44,7 @@ export function surf(divId,x,y,z,type){//"id",1d[],1d[],2d[]
 
 export function updateSurf(divId,x,y,z){//"id",1d[],1d[],2d[]
   var update = {
-    // x: [x],
+    x: [x],
     // y: [y],
     z: [z]
   }
