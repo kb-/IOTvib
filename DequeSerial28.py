@@ -39,7 +39,7 @@ port = 'COM9'
 baud = 500000               # read fast! don't lose too much CPU cycles reading
 
 # sensor data
-fs = 1600                    # ADXL345: 3200 Hz demo 800
+fs = 3200                    # ADXL345: 3200 Hz demo 800
 l_packet = int(fs / 10)     # 0.1 s of data
 
 ntracks = 3
@@ -133,21 +133,6 @@ def setSettings():
 
 
 settings = setSettings()
-
-# create hdf5 file
-if os.path.exists("file.h5"):
-    shutil.copy2("file.h5", "file_old.h5")
-    os.remove("file.h5")
-file = h5py.File('file.h5')
-# timeseries: contains all tracks, raw int16 data (as downloaded)
-dsts = file.create_dataset('ts',
-                           (ntracks, 0),
-                           maxshape=(ntracks, None),
-                           chunks=(ntracks, l_packet),
-                           dtype='i2',
-                           compression="lzf")
-dsts_cnt = 0
-
 
 def read_from_port(s, appendData, appendData2):
     """Read data from Aduino"""
@@ -334,14 +319,29 @@ async def runTogether():
     bound_useBfft = functools.partial(useBfft, spec=spectrum)
     await asyncio.gather(serve(5678, useB), serve(5677, bound_useBfft), serve(5676, cmd))
 
-try:
-    thread = threading.Thread(target=read_from_port, args=(
-        ser, buffer.append, buffer2.append))
-    thread.start()
-
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(runTogether())
-    loop.run_forever()
-
-except KeyboardInterrupt:
-    ser.close()
+# create hdf5 file
+if os.path.exists("file.h5"):
+    shutil.copy2("file.h5", "file_old.h5")
+    os.remove("file.h5")
+with h5py.File('file.h5') as file:
+    
+    # timeseries: contains all tracks, raw int16 data (as downloaded)
+    dsts = file.create_dataset('ts',
+                               (ntracks, 0),
+                               maxshape=(ntracks, None),
+                               chunks=(ntracks, l_packet),
+                               dtype='i2',
+                               compression="lzf")
+    dsts_cnt = 0
+    
+    try:
+        thread = threading.Thread(target=read_from_port, args=(
+            ser, buffer.append, buffer2.append))
+        thread.start()
+    
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(runTogether())
+        loop.run_forever()
+    
+    except KeyboardInterrupt:
+        ser.close()

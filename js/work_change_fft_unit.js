@@ -7,6 +7,7 @@ self.addEventListener('message', function(o) {
     var spectrums = a2d_fill(o.data.cbufs[0].length,o.data.cbufs[0].data[0].length,0);//n spectrums x n lines
     for(let j=0; j<o.data.cbufs[i].length; j++){//loop on spectrums
       spectrums[j] = fft_int(o.data.cbufs[i].data[j], o.data.f, o.data.unit_conversion[i].int, o.data.unit_conversion[i].sc);
+      spectrums[j][0] = 0;//flot addData can't handle Infinity, NaN or null
     }
     r.push(spectrums);
   }

@@ -158,7 +158,9 @@
       <div id="placeholder1" class="resizablev" style="width: auto;">
       </div>
       <div id="mainrow2" class="resizablev" style="width: auto;">
-        <div id="placeholder2" style="width: 100%; float: left;"><!-- style="width: auto;" -->
+        <div id="placeholder2" style="width: 100%; float: left;">
+        </div>
+        <div id="placeholder3" style="width: 100%; float: left;">
         </div>
         <table id="marker_table" style="width: 50%;" hidden>
           <thead>
@@ -210,7 +212,8 @@ var ntracks = 3;                  //TO DO:generalize code for ntracks
 // window.unit_conversion = {int:0,sc:1};
 
 var placeholder1 = $("#placeholder1");
-var placeholder2 = $("#placeholder2");
+window.placeholder2log = $("#placeholder2");
+window.placeholder2lin = $("#placeholder3");
 
 //https://www.html5rocks.com/en/tutorials/webgl/typed_arrays/
 var def1 = [
@@ -300,6 +303,8 @@ var options2 = {
   }
 };
 
+var options3 = $.extend(true, {}, options2, {yaxis:{mode:"lin", min:0}});
+
 window.data = [[],[],[]
     // { data: [], label: "X" },
     // { data: [], label: "Y"},
@@ -310,8 +315,12 @@ window.spectrums = [];
 window.spectrums_default = [];
 window.cbufs = [];                      //active unit spectrum buffer
 window.cbufs_default = [];          //default unit spectrum buffer
-window.plot1 = $.plot(placeholder1, [data], options1);
-window.plot2 = $.plot(placeholder2, [data2], options2);
+window.plot1 = $.plot(placeholder1, [data], options1);//time serries (top)
+window.plot2log = $.plot(placeholder2, [data2], options2);//FFT lin-log (btm)
+window.plot2lin = $.plot(placeholder3, [data2], options3);//FFT lin-lin (btm)
+
+window.placeholder2 = placeholder2log;
+window.plot2 = window.plot2log;
 window.freq = [];
 
 var ws1 = new WebSocket("ws://127.0.0.1:5678/");
@@ -325,6 +334,7 @@ window.fftaveraging = {"lin":{"n":"nAverage"}, "exp":{"alpha":"nAverage"},"overa
 window.colbuf = new CBuffer(...distinct_colors);
 
 $(function(){
+  $("#placeholder3").hide();//only hide on load to prevent Firefox bug https://bugzilla.mozilla.org/show_bug.cgi?id=941146
   setToolTip(2);
   $("#record_data").change(onSettingsBool);
   $("#record_fft").change(onSettingsBool);
@@ -468,7 +478,7 @@ ws1.onmessage = function (event) {
         plot1.setData(data);
     }
     plot1.getOptions().xaxes[0].max = data[0][data[0].length-1][0];//[1st track][last point][t]
-    plot1.setupGrid(true);
+    plot1.setupGrid();
     plot1.draw();
     
     ws1.i=ws1.i+j;
@@ -1565,14 +1575,35 @@ $(function(){
     }
   }, false);
   
-    placeholder2.on('resize marker_edit',function(){
-      if(plot2.getOptions()!==null){
-        // plot2.setData(data2);
-        plot2.setupGrid(true);//
-        plot2.draw();
-      }
-    });
+  placeholder2.on('resize marker_edit',function(){
+    if(plot2.getOptions()!==null){
+      // plot2.setData(data2);
+      plot2.setupGrid(true);//
+      plot2.draw();
+    }
+  });
 });
+
+
+//toggle lin/log Y
+window.LinLogTog = function(){
+  if(LinLogTog.isLog){
+    placeholder2lin.off("plotselected");
+    $("#placeholder2").hide();
+    $("#placeholder3").show();
+    plot2 = window.plot2lin;
+    placeholder2 = placeholder2lin;
+  }else{
+    placeholder2log.off("plotselected");
+    $("#placeholder3").hide();
+    $("#placeholder2").show();
+    plot2 = window.plot2log;
+    placeholder2 = placeholder2log;
+  }
+  zoomSelect(placeholder2,plot2,'xy',data2);
+}
+LinLogTog.isLog=true;
+
 
 //convert binary data to datastream
 function decode(dataB, def, cb){

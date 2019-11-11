@@ -4,7 +4,7 @@ import h5py
 
 def plot():
 
-    file = h5py.File('file.h5')
+    file = h5py.File('file.h5','r')
     dsts = file.get('ts')
     
     fs=800

@@ -40,6 +40,7 @@
   user-select: none;
   pointer-events: none;
   color: white;
+  width: 75px;
 }
 
 #SpectrogramCanvas canvas{
@@ -52,7 +53,7 @@
   height:48%;
 }
 
-#placeholder2{
+#placeholder2, #placeholder3{
   width: auto;
   height: 100%;
   position:relative;
@@ -195,7 +196,7 @@ input[type=submit],button{
   position: absolute;
 }
 
-#marker_table, #placeholder2 {
+#marker_table, #placeholder2, #placeholder3 {
   -webkit-transition: .05s;
   transition: .05s;
 }

@@ -88,7 +88,7 @@ class spectral:
         """Compute FFT"""
         if self.detrend:
             #linear or constant least squares detrend
-            sig.detrend(y, overwrite_data=True, type=self.detrend)
+            y = sig.detrend(y, overwrite_data=True, type=self.detrend)
 
         if self.avg == 'exp':
             self.fft_spectrum_expAvg(y)

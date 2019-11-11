@@ -2,7 +2,7 @@
 //ok, no data lost
 
 #define F_CPU (48000000UL)
-#define READ_F_HZ (800)
+#define READ_F_HZ (1600)
 #define WAIT_TC16_REGS_SYNC(x) while(x->COUNT16.STATUS.bit.SYNCBUSY);
 #define bufferSize 128
 
