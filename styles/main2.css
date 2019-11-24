@@ -205,6 +205,10 @@ input[type=submit],button{
   font-size: 12px;
 }
 
+.nopad{
+  padding-left: 0 !important;
+}
+
 table{
   font-size:12px;
   text-align: left;

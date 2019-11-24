@@ -415,7 +415,7 @@ ws2.onmessage = function (event) {
     
     if(plot2.getOptions()!==null){
       plot2.setData(data2);
-      showlegend();
+      showlegend(plot2);
       plot2.draw();
     }
     
@@ -656,7 +656,7 @@ function onSelectDisplay(e){
     
     $("#SpectrogramOpt").hide();
     if(this_.id == "select_display2"){
-      if($(".flot-overlay",$('#placeholder2')).length)$('#placeholder2').children('[class*="flot-"]').hide();//plot2.destroy();
+      if($(".flot-overlay",$('#placeholder2')).length)$('#placeholder2, #placeholder3').children('[class*="flot-"]').hide();//plot2.destroy();
       $("#graph3d, #Spectrogram").remove();
       if(typeof(scene)!="undefined")scene = null;
       if(typeof(obj3d)!="undefined")obj3d = undefined;
@@ -664,10 +664,13 @@ function onSelectDisplay(e){
         case 'Spectrum':
           $('#placeholder2 [class*="flot-"], #placeholder3 [class*="flot-"]').show();
           // plot2 = $.plot(placeholder2, [data2], options2);
-          // plot2.setData(data2);
-          // plot2.draw();
+          plot2.setData(data2);
+          plot2.setupGrid(true);
+          plot2.draw();
           break;
         case 'Spectrogram':
+          $("#placeholder3").hide();
+          $("#placeholder2").show();
           $('#placeholder2').append('<div id="Spectrogram"/>');
           $("#SpectrogramOpt").show();
           plotSpectrogram();
@@ -730,8 +733,7 @@ function setSpectrogramXYaxis(){
   if(typeof(window.spy)==="undefined")window.spy = math.range(0, settings.fs/2, settings.fft.df).toArray();
 }
 
-//3d
-//plotly is too slow. not for real time
+//plotly
 function plotSpectrogram_(type){
   if(!$("#Spectrogram3dOpt:checked, #Spectrogram2dDetOpt:checked").length || !$("#Spectrogram").length)return;
   setSpectrogramXYaxis();
@@ -768,7 +770,7 @@ window.updateSpectrogram_ = function updateSpectrogram(){
   }
 };
 
-//2d
+//2d fast
 function plotSpectrogram(){
   if(!$("#Spectrogram2dOpt")[0].checked || !$("#Spectrogram").length)return;
   setSpectrogramXYaxis();
@@ -1113,7 +1115,7 @@ $(function(){
     $(placeholder2).trigger("update_fft_markers");
   });  
   
-  $(placeholder2).on("hide_marker_table",hide_marker_table);
+  $("#placeholder2, #placeholder3").on("hide_marker_table",hide_marker_table);
   
   function hide_marker_table(){
     $("#FFTmarkerTableSwitch, #FFTmarkerTableEdit, #FFTmarkerSwitch").prop("checked", false).change();
@@ -1135,7 +1137,7 @@ $(function(){
   }
   
   $("#placeholder2, #placeholder3").on("update_fft_markers",function(){
-    var c = $("#placeholder2, #placeholder3").clidren(".flot-base");
+    var c = $("#placeholder2, #placeholder3").children(".flot-base");
     var r = [];
     for(let i=0; i<spSelected.length; i++) {
       if(spSelected[i].type != "powerband"){//don't display point marker for bowerband
@@ -1143,7 +1145,7 @@ $(function(){
         r.push({left:pt.left, top:pt.top, color:colbuf.get(i), radius:2});//get color, loops over if length > #colors
       }
     }
-    c.map(_=>plotmarkers(c,r));//plot point and max markers
+    c.map((i,e)=>plotmarkers(e,r));//plot point and max markers
   });
   
   $("#placeholder2, #placeholder3").on("resize marker_edit", function(){
@@ -1594,10 +1596,13 @@ $(function(){
       // plot2.getYAxes()[0].options.max = plot2.getYAxes()[0].datamax;
       // plot2.getYAxes()[0].options.min = plot2.getYAxes()[0].datamin;
       plot2.setData(data2);
-      setTimeout(function(){
+      if($("#select_display2").val()=="Spectrum")setTimeout(function(){//firefox complains if drawing on hidden canvas
         plot2.setupGrid(true);
         plot2.draw();
       },10);
+      if($("#select_display2").val()=="Spectrogram"){
+        plotSpectrogram();
+      }
       zoomSelect(placeholder2lin,plot2,'xy',data2);
       zoomSelect(placeholder2log,plot2,'xy',data2);
       spectrums = cbufs.map((e)=>e.slice(-1)[0]);//get all last scaled spectrums, write to displayed spectrums
@@ -1606,7 +1611,7 @@ $(function(){
   }, false);
   
   $("#placeholder2, #placeholder3").on('resize marker_edit',function(){
-    if(plot2.getOptions()!==null){
+    if(plot2.getOptions()!==null && $("#select_display2").val()=="Spectrum"){
       // plot2.setData(data2);
       plot2.setupGrid(true);//
       plot2.draw();
@@ -1643,10 +1648,12 @@ window.LinLogTog = function(isLog){
   }
   plot2.setData(data2);
   zoomSelect(placeholder2,plot2,'xy',data2);
-  showlegend();
   if($("#select_display2").val()=="Spectrum"){
-    plot2.setupGrid(true);
+    showlegend(plot2);
     plot2.draw();
+  }
+  if($("#select_display2").val()=="Spectrogram"){
+    plotSpectrogram();
   }
 
   //plot2.getYAxes()[0].options.growOnly=true;
@@ -1654,11 +1661,11 @@ window.LinLogTog = function(isLog){
 }
 // LinLogTog.isLog=true;
 
-function showlegend(){
-  if(!plot2.getOptions().legend.show){//only run once
-    plot2.getOptions().legend.show = true;
-    plot2.setupGrid(true);
-    $("[class^=flot]").next(".legend").addClass("flot-legend");//add flot-legend class to legends
+function showlegend(plot){
+  if(!plot.getOptions().legend.show){//only run once
+    plot.getOptions().legend.show = true;
+    plot.setupGrid(true);
+    // $("[class^=flot]").next(".legend").addClass("flot-legend");//add flot-legend class to legends
   }
 }
 
