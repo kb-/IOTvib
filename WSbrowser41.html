@@ -193,7 +193,7 @@
     <!-- <script type="text/javascript"> -->
     <script type="module">
 
-import { init3d, animate3d, initSpectrogram } from '../js/3d_draw4.js';
+import { init3d, animate3d } from '../js/3d_draw4.js';
 import { surf, updateSurf } from '../js/plt.js';
 import { distinct_colors } from '../js/distinct_colors.js';
 import { plotmarkers } from '../js/plot_tools.js';
@@ -734,20 +734,14 @@ function setSpectrogramXYaxis(){
 }
 
 //plotly
-function plotSpectrogram_(type){
+window.plotSpectrogram_ = function(type){
   if(!$("#Spectrogram3dOpt:checked, #Spectrogram2dDetOpt:checked").length || !$("#Spectrogram").length)return;
   setSpectrogramXYaxis();
   if(typeof(window.spz)==="undefined")window.spz = nj.zeros([Math.floor(settings.fft.nlines/2),nfft]).tolist();
-  plt.surf("Spectrogram",spx,spy,spz,type).then(function(e){
+  plt.surf("Spectrogram",spx,spy,spz,type,{type:$("#SpectrumLinLog")[0].checked?"log":"linear"}).then(function(e){
     // console.log(e);
     updateSpectrogram_();
   });
-/*   var r = initSpectrogram($(placeholder2).get(0),{x:nfft,y:Math.floor(settings.fft.nlines/2)});
-  animate3d();
-  console.log(r);
-  window.THREE = r.THREE;
-  window.scene = r.scene;
-  window.controls = r.controls; */
 }
 
 var old_cnt_ws2;

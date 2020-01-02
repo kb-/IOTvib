@@ -193,7 +193,7 @@
     <!-- <script type="text/javascript"> -->
     <script type="module">
 
-import { init3d, animate3d, initSpectrogram } from '../js/3d_draw4.js';
+import { init3d, animate3d } from '../js/3d_draw4.js';
 import { surf, updateSurf } from '../js/plt.js';
 import { distinct_colors } from '../js/distinct_colors.js';
 import { plotmarkers } from '../js/plot_tools.js';
@@ -740,12 +740,6 @@ function plotSpectrogram_(type){
     // console.log(e);
     updateSpectrogram_();
   });
-/*   var r = initSpectrogram($(placeholder2).get(0),{x:nfft,y:Math.floor(settings.fft.nlines/2)});
-  animate3d();
-  console.log(r);
-  window.THREE = r.THREE;
-  window.scene = r.scene;
-  window.controls = r.controls; */
 }
 
 var old_cnt_ws2;

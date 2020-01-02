@@ -39,7 +39,7 @@ port = 'COM9'
 baud = 500000               # read fast! don't lose too much CPU cycles reading
 
 # sensor data
-fs = 3200                    # ADXL345: 3200 Hz demo 800
+fs = 1600                    # ADXL345: 1600 Hz (bad signal at 3200 Hz) demo 800
 l_packet = int(fs / 10)     # 0.1 s of data
 
 ntracks = 3
