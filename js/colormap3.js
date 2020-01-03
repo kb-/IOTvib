@@ -97,6 +97,7 @@ module.exports={"jet":[{"index":0,"rgb":[0,0,131]},{"index":0.125,"rgb":[0,60,17
  */
 'use strict';
 var at = require('arraytools');
+window.arraytools = at;
 var colorScale = require('./colorScales.json');
 
 

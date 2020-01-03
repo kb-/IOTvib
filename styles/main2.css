@@ -39,7 +39,7 @@
   position: absolute;
   user-select: none;
   pointer-events: none;
-  color: white;
+  color: gray;
   width: 75px;
 }
 
@@ -271,4 +271,9 @@ table ::selection{
     fill: rgba(255, 255, 255, 0.85);
     stroke: rgba(0, 0, 0, 0.85);
     stroke-width: 1;
+}
+
+#fft-nlines {
+    width: auto;
+    text-align: right;
 }

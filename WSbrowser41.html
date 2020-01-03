@@ -130,6 +130,7 @@
                     <option value=false>False</option>
                     <option value="constant" selected>constant</option>
                     <option value="linear">linear</option>
+                    <!-- <option value="filter">filter</option> -->
                   </select>
               </div>
               <div class="settingsline">
@@ -279,6 +280,7 @@ var options2 = {
   },
   series: {
     shadowSize: 0,	// Drawing is faster without shadows
+    downsample: { threshold: 0 }
     //downsample: { threshold: 2000 }//using Largest-Triangle-Three-Buckets downsampling plugin (best compromize between keeping visual features and performance) https://skemman.is/handle/1946/15343
   },
   yaxis: {
@@ -836,7 +838,7 @@ $(function(){
       // var c = ctx.getImageData(mouseX, mouseY, 1, 1).data;
       //console.log("ctx.canvas.height-mouseY",ctx.canvas.height-mouseY);
       if(ctx.canvas.height-mouseY != NaN){
-        $('#ttip').css({'left':mouseX/scaleX-90, 'top':mouseY/scaleY*settings.fft.df-20}).html("f:"+(Math.round((ctx.canvas.height-mouseY))*settings.fft.df).toPrecision(4)+" Hz  \n a:"+spz[Math.round(ctx.canvas.height - mouseY)][Math.round(mouseX)].toPrecision(4)+unit_conversion[displayed_spectrogram_idx].u);
+        $('#ttip').css({'left':mouseX/scaleX-90, 'top':mouseY/scaleY-20}).html("f:"+(Math.round((ctx.canvas.height-mouseY))*settings.fft.df).toPrecision(4)+" Hz  \n a:"+spz[Math.round(ctx.canvas.height - mouseY)][Math.round(mouseX)].toPrecision(4)+unit_conversion[displayed_spectrogram_idx].u);
       }
       // console.log(mouseX, mouseY);
     });
@@ -931,7 +933,7 @@ window.peak_fit_corr = function peak_fit_corr(Y,f,bin){
 
   var r={};
   
-  if(band == 1){
+  if(band == 0){
     r.fcorr = fc - dfc;
   }else{
     r.fcorr = fc + dfc;
