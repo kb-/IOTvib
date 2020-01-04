@@ -744,13 +744,20 @@ window.plotSpectrogram_ = function(type){
     // console.log(e);
     updateSpectrogram_();
   });
+  //display cursor data
+  $("#Spectrogram")[0].on('plotly_hover', function(data){
+      var infotext = data.points.map(function(d){
+        return ('t= '+d.x+' s, f= '+d.y+' Hz, a='+(Math.pow(10,d.z)).toExponential(2)+' '+unit_conversion[displayed_spectrogram_idx].u);
+      });
+      $("#clickdata")[0].innerHTML = infotext.join('<br/>');
+  })
 }
 
 var old_cnt_ws2;
-window.updateSpectrogram_ = function updateSpectrogram(){
+window.updateSpectrogram_ = function(force){
   if(!$("#Spectrogram3dOpt:checked, #Spectrogram2dDetOpt:checked").length || !$("#Spectrogram").length)return;
   // console.log("updateSpectrogram",cnt_ws2,old_cnt_ws2);
-  if(cnt_ws2==old_cnt_ws2){
+  if(cnt_ws2==old_cnt_ws2 && !force){
     setTimeout(updateSpectrogram,10);
     return false;//update if new data
   }else{
@@ -786,7 +793,7 @@ function plotSpectrogram(){
   updateSpectrogram();
 }
 
-window.updateSpectrogram = function updateSpectrogram(){
+window.updateSpectrogram = function(){
   if(!$("#Spectrogram2dOpt")[0].checked || !$("#Spectrogram").length || !cbufs.length)return;
   // window.d = cbufs[displayed_spectrogram_idx].slice();
   if($("#Spectrogram").length){
@@ -870,9 +877,9 @@ function plot3d(){
 window.spSelected = [];//spectrum selections
 function onPlotClick(event, pos, item){
   //if(!$("#clickdata").length) placeholder2.parent().append('<div id="clickdata"\>');
-  
+  //parseFloat(157.00.toFixed(3)).toString()
   if (item) {
-    $("#clickdata").text("Track: " + settings.tracks[item.seriesIndex] + " f:" + item.series.data[item.dataIndex][0].toPrecision(6)+" Hz, " + item.series.data[item.dataIndex][1].toPrecision(6)+" "+unit_conversion[displayed_spectrogram_idx].u);
+    $("#clickdata").text("Track: " + settings.tracks[item.seriesIndex] + " f:" + parseFloat(item.series.data[item.dataIndex][0].toPrecision(3)).toString()+" Hz, " + parseFloat(item.series.data[item.dataIndex][1].toPrecision(3)).toString()+" "+unit_conversion[displayed_spectrogram_idx].u);
     console.log("onPlotClick", item);
     plot2.highlight(item.series, item.datapoint);
     
@@ -945,22 +952,22 @@ window.peak_fit_corr = function peak_fit_corr(Y,f,bin){
 window.marker_table_alias = {
       // item:                 item,
       name:               {name:"Name"},
-      f:                      {name:"f (Hz)", precision:4},//with peakfit if active
-      nearest:            {name:"f_{FFT band} (Hz)", precision:4},//nearest fft band freq
+      f:                      {name:"f (Hz)", precision:3},//with peakfit if active
+      nearest:            {name:"f_{FFT band} (Hz)", precision:3},//nearest fft band freq
       //trackIdx:          
       trackName:       {name:"Track"},
-      selectedY:         {name:"Y_{at selection}", precision:4},
-      currentY:           {name:"Y", precision:4},
-      overallY:           {name:"Y_{overall}", precision:4},
-      min:                  {name:"Y_{min}", precision:4},
-      max:                 {name:"Y_{max}", precision:4},
+      selectedY:         {name:"Y_{at selection}", precision:2},
+      currentY:           {name:"Y", precision:2},
+      overallY:           {name:"Y_{overall}", precision:2},
+      min:                  {name:"Y_{min}", precision:2},
+      max:                 {name:"Y_{max}", precision:2},
       n:                     {name:"n_{FFT}"},
-      Var:                  {name:"var", precision:4},
-      std:                   {name:"std", precision:4},
+      Var:                  {name:"var", precision:3},
+      std:                   {name:"std", precision:3},
       peakFit:            {name:"Peak Corr"},
       type:                {name:"Type"},
-      fmin:                {name:"f_{min}", precision:4},
-      fmax:               {name:"f_{max}", precision:4},
+      fmin:                {name:"f_{min}", precision:2},
+      fmax:               {name:"f_{max}", precision:2},
       unit:                 {name:"Unit"},
     };
 
@@ -1001,7 +1008,7 @@ marker_table_alias.getValues = function(n, o){//["marker keys"], spSelected
     let r = [];
     for(let p in n){
       if(typeof(o[j][n[p]])=="string")r.push(o[j][n[p]]);
-      if(typeof(o[j][n[p]])=="number")r.push(parseFloat(o[j][n[p]].toPrecision(this[n[p]].precision)).toString());//truncates to precision and removes trailing 0
+      if(typeof(o[j][n[p]])=="number")r.push(parseFloat(o[j][n[p]].toFixed(this[n[p]].precision)).toString());//truncates to precision and removes trailing 0
     }
     v[j] = r;
   };
@@ -1650,6 +1657,7 @@ window.LinLogTog = function(isLog){
   }
   if($("#select_display2").val()=="Spectrogram"){
     plotSpectrogram();
+    updateSpectrogram_(true);//force plotly update (if diaplayed)
   }
 
   //plot2.getYAxes()[0].options.growOnly=true;
