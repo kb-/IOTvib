@@ -758,7 +758,7 @@ window.updateSpectrogram_ = function(force){
   if(!$("#Spectrogram3dOpt:checked, #Spectrogram2dDetOpt:checked").length || !$("#Spectrogram").length)return;
   // console.log("updateSpectrogram",cnt_ws2,old_cnt_ws2);
   if(cnt_ws2==old_cnt_ws2 && !force){
-    setTimeout(updateSpectrogram,10);
+    setTimeout(updateSpectrogram_,10);
     return false;//update if new data
   }else{
     setSpectrogramXYaxis();
@@ -845,7 +845,7 @@ $(function(){
       // var c = ctx.getImageData(mouseX, mouseY, 1, 1).data;
       //console.log("ctx.canvas.height-mouseY",ctx.canvas.height-mouseY);
       if(ctx.canvas.height-mouseY != NaN){
-        $('#ttip').css({'left':mouseX/scaleX-90, 'top':mouseY/scaleY-20}).html("f:"+(Math.round((ctx.canvas.height-mouseY))*settings.fft.df).toPrecision(4)+" Hz  \n a:"+spz[Math.round(ctx.canvas.height - mouseY)][Math.round(mouseX)].toPrecision(4)+unit_conversion[displayed_spectrogram_idx].u);
+        $('#ttip').css({'left':mouseX/scaleX-90, 'top':mouseY/scaleY-20}).html("f:"+(Math.round((ctx.canvas.height-mouseY))*settings.fft.df).toPrecision(4)+" Hz  \n a:"+spz[Math.round(ctx.canvas.height - mouseY)][Math.round(mouseX)].toPrecision(4)+' '+unit_conversion[displayed_spectrogram_idx].u);
       }
       // console.log(mouseX, mouseY);
     });
@@ -1605,6 +1605,7 @@ $(function(){
       },10);
       if($("#select_display2").val()=="Spectrogram"){
         plotSpectrogram();
+        updateSpectrogram_(true);
       }
       zoomSelect(placeholder2lin,plot2,'xy',data2);
       zoomSelect(placeholder2log,plot2,'xy',data2);
